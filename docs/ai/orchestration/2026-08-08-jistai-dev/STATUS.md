@@ -38,6 +38,12 @@
 - 改动：`common/constants.go` `SystemName="JistAI"`（后端默认，运行实例 DB 无 SystemName 选项行，改代码即生效）；`web/src/lib/constants.ts` `DEFAULT_SYSTEM_NAME='JistAI'`；`footer.tsx` 普通分支版权行改为 JistAI 加粗超链接 + 二次开发声明（右侧上游署名保留）。
 - 验证：`go build ./...` ✅、`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` `system_name:"JistAI"`；首页 DOM：版权文本匹配、链接 href/target/_blank/加粗均正确（截图 `.local-tests/ui-home-jistai-name.png`）。
 - 提交：`af25cd68 feat(branding): 系统名称改为 JistAI，首页版权行加 JistAI 超链接与二次开发声明`（本地，未推送）。
+
+## 诊断：网页聊天与客户端预设点击行为（2026-08-08）
+
+- 现象：用户反馈「只有 AI as Workspace 内置成功」。实测结论：预设分为两类——https（AI as Workspace、Lobe Chat 官方示例）在浏览器中正常打开新标签并自动注入令牌/地址；自定义协议（ccswitch://、cherrystudio://、deepchat://、opencat://、ama://、fluentread）只能在已安装对应客户端的设备上唤起，浏览器内无法打开（CC Switch 点击后落到本地 /ccswitch 404，属浏览器对自定义协议的回退行为，非二开 bug）。
+- 内置网页聊天页：/chat/<id> 需要管理员配置 web 类型聊天预设才有入口；当前未配置 → /chat 404、/chat/new 跳回仪表盘；Playground 可用但无渠道/模型（channels=0）无法发消息。
+- 结论：给用户使用需 ① 配置渠道；② 用户在装有客户端的设备上点击预设唤起 App；③ 或配置 web 聊天预设做纯网页聊天。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
