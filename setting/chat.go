@@ -20,7 +20,7 @@ var Chats = []map[string]string{
 		"流畅阅读": "fluentread",
 	},
 	{
-		"CC Switch": "ccswitch",
+		"CC Switch": "ccswitch://v1/import?resource=provider&app=claude&name=JistAI&endpoint={address}&apiKey={key}&homepage={address}&enabled=true",
 	},
 	{
 		"DeepChat": "deepchat://provider/install?v=1&data={deepchatConfig}",
