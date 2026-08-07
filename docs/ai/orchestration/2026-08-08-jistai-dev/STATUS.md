@@ -44,6 +44,14 @@
 - 现象：用户反馈「只有 AI as Workspace 内置成功」。实测结论：预设分为两类——https（AI as Workspace、Lobe Chat 官方示例）在浏览器中正常打开新标签并自动注入令牌/地址；自定义协议（ccswitch://、cherrystudio://、deepchat://、opencat://、ama://、fluentread）只能在已安装对应客户端的设备上唤起，浏览器内无法打开（CC Switch 点击后落到本地 /ccswitch 404，属浏览器对自定义协议的回退行为，非二开 bug）。
 - 内置网页聊天页：/chat/<id> 需要管理员配置 web 类型聊天预设才有入口；当前未配置 → /chat 404、/chat/new 跳回仪表盘；Playground 可用但无渠道/模型（channels=0）无法发消息。
 - 结论：给用户使用需 ① 配置渠道；② 用户在装有客户端的设备上点击预设唤起 App；③ 或配置 web 聊天预设做纯网页聊天。
+
+## 修复：CC Switch 预设链接残缺（2026-08-08）
+
+- 根因：`setting/chat.go` 默认 `"CC Switch": "ccswitch"` 缺少 `://v1/import?...`，前端 `window.open("ccswitch")` 按相对路径解析 → 本地 `/ccswitch` 404，从未发起协议唤起（即使已安装客户端也打不开）。
+- 修复：改为完整深链模板 `ccswitch://v1/import?resource=provider&app=claude&name=JistAI&endpoint={address}&apiKey={key}&homepage={address}&enabled=true`（格式与 `cc-switch-dialog.tsx` 一致，`{address}`/`{key}` 由前端替换为服务器地址与令牌）。
+- 验证：`go build` ✅；镜像重建 + 重启；`/api/status` chats 中 CC Switch 已返回完整深链。
+- 重要限制：应用内浏览器（webview）不会把自定义协议交给系统，唤起 CC Switch 需在 Chrome/Edge 等普通浏览器点击（已安装客户端时系统会弹「打开 CC Switch？」）。
+- 提交：`4e2cb6a1 fix(chat): 补全 CC Switch 一键导入深链模板`（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
