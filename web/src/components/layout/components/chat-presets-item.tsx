@@ -48,6 +48,7 @@ import {
   resolveChatUrl,
   type ChatPreset,
 } from '@/features/chat/lib/chat-links'
+import { openExternalApp } from '@/features/chat/lib/external-launch'
 
 import { normalizeHref } from '../lib/url-utils'
 import type { NavChatPresets } from '../types'
@@ -212,7 +213,11 @@ export function ChatPresetsItem({ item }: { item: NavChatPresets }) {
 
       if (typeof window === 'undefined') return
 
-      window.open(url, '_blank', 'noopener')
+      if (preset.type === 'custom-protocol') {
+        await openExternalApp(preset, url, t)
+      } else {
+        window.open(url, '_blank', 'noopener')
+      }
       setOpenMobile(false)
     },
     [serverAddress, setOpenMobile, t]

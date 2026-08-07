@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/tooltip'
 import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
 import { resolveChatUrl, type ChatPreset } from '@/features/chat/lib/chat-links'
+import { getDownloadUrlForPreset, openExternalApp } from '@/features/chat/lib/external-launch'
 import { sendToFluent } from '@/features/chat/lib/send-to-fluent'
 import { encodeChannelConnectionInfo } from '@/lib/channel-connection-info'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
@@ -124,11 +125,8 @@ export function DataTableRowActions<TData>({
         if (success) {
           toast.success(t('Sent the API key to FluentRead.'))
         } else {
-          toast.info(
-            t(
-              'FluentRead extension not detected. Please ensure it is installed and active.'
-            )
-          )
+          toast.warning(t('Please install this app first'))
+          window.open(getDownloadUrlForPreset(preset), '_blank', 'noopener')
         }
         return
       }
@@ -146,10 +144,14 @@ export function DataTableRowActions<TData>({
 
       if (typeof window === 'undefined') return
 
-      try {
-        window.open(resolvedUrl, '_blank', 'noopener')
-      } catch {
-        window.location.href = resolvedUrl
+      if (preset.type === 'custom-protocol') {
+        await openExternalApp(preset, resolvedUrl, t)
+      } else {
+        try {
+          window.open(resolvedUrl, '_blank', 'noopener')
+        } catch {
+          window.location.href = resolvedUrl
+        }
       }
     },
     [resolveRealKey, apiKey.id, serverAddress, t]
