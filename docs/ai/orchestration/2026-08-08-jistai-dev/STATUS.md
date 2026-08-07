@@ -52,6 +52,14 @@
 - 验证：`go build` ✅；镜像重建 + 重启；`/api/status` chats 中 CC Switch 已返回完整深链。
 - 重要限制：应用内浏览器（webview）不会把自定义协议交给系统，唤起 CC Switch 需在 Chrome/Edge 等普通浏览器点击（已安装客户端时系统会弹「打开 CC Switch？」）。
 - 提交：`4e2cb6a1 fix(chat): 补全 CC Switch 一键导入深链模板`（本地，未推送）。
+
+## 实现：客户端预设「未安装探测 + 下载页引导」（2026-08-08）
+
+- 需求：https 预设在内置浏览器直接打开；自定义协议预设先探测本地是否安装，未安装则弹「请先安装此应用」并跳转对应下载页。
+- 实现：新增 `web/src/features/chat/lib/external-launch.ts`（`APP_DOWNLOAD_URLS` 映射 + `openExternalApp` 探测：`window.open(协议链接)` 后 1.8s 内窗口未关闭/被拦截 → 判定未安装 → 关闭占位窗口 → toast「请先安装此应用」→ 打开下载页）；接入令牌行操作菜单与侧栏聊天预设两处入口；FluentRead 扩展缺失时同样处理；i18n 7 语言新增提示 key。
+- 下载页映射：CC Switch→ccswitch.io、Cherry Studio→cherryai.com.cn/download、AionUI→aionui.site/download、DeepChat→GitHub Releases、OpenCat→App Store、AMA/BotGem→App Store、FluentRead→GitHub。
+- 验证：typecheck/build ✅；镜像重建 + 重启；应用内浏览器实测 CC Switch：协议导航被浏览器安全策略拦截后，回退逻辑自动打开 ccswitch.io 下载页（符合未安装流程）。注：应用内浏览器本身不支持自定义协议唤起，真实用户需在 Chrome/Edge 使用（已安装时会由系统弹「打开 CC Switch？」）。
+- 提交：`5a98bc8e feat(chat): 客户端预设未安装时弹提示并跳转下载页（含安装探测）`（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
