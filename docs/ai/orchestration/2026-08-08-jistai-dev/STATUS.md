@@ -31,6 +31,13 @@
 - 修复：改用**独立新文件名** `/jistai-logo.png`（新 URL 无缓存），并**恢复原版 `web/public/logo.png`**（上游资产保留，可回退）。改动点：新增 `web/public/jistai-logo.png`；`lib/constants.ts` `DEFAULT_LOGO='/jistai-logo.png'`；`index.html` favicon；`footer.tsx` 兜底路径。`index.html` 本身是 `no-cache`，普通刷新即可拿到新代码。
 - 验证：`bun run typecheck`/`build` ✅；镜像重建 + 容器重启；`curl /jistai-logo.png` = 222734（新图），`/logo.png` = 9597（原版）；浏览器实测首页 header/footer、登录页、favicon 均指向 `/jistai-logo.png`。
 - 提交：`9ae59c41 fix(branding): logo 改用独立文件 jistai-logo.png 绕过浏览器 7 天缓存`（本地，未推送）。
+
+## 当前阶段：品牌二开 · 系统名称与版权行（2026-08-08）
+
+- 需求：① 系统名称改为 JistAI；② 首页左下版权行改为「© 2026 JistAI.版权所有.基于New API二次开发」；③ JistAI 加粗并链接到 `https://github.com/jist319/new-api/tree/dev`。
+- 改动：`common/constants.go` `SystemName="JistAI"`（后端默认，运行实例 DB 无 SystemName 选项行，改代码即生效）；`web/src/lib/constants.ts` `DEFAULT_SYSTEM_NAME='JistAI'`；`footer.tsx` 普通分支版权行改为 JistAI 加粗超链接 + 二次开发声明（右侧上游署名保留）。
+- 验证：`go build ./...` ✅、`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` `system_name:"JistAI"`；首页 DOM：版权文本匹配、链接 href/target/_blank/加粗均正确（截图 `.local-tests/ui-home-jistai-name.png`）。
+- 提交：`af25cd68 feat(branding): 系统名称改为 JistAI，首页版权行加 JistAI 超链接与二次开发声明`（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
