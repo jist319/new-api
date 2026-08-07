@@ -60,6 +60,13 @@
 - 下载页映射：CC Switch→ccswitch.io、Cherry Studio→cherryai.com.cn/download、AionUI→aionui.site/download、DeepChat→GitHub Releases、OpenCat→App Store、AMA/BotGem→App Store、FluentRead→GitHub。
 - 验证：typecheck/build ✅；镜像重建 + 重启；应用内浏览器实测 CC Switch：协议导航被浏览器安全策略拦截后，回退逻辑自动打开 ccswitch.io 下载页（符合未安装流程）。注：应用内浏览器本身不支持自定义协议唤起，真实用户需在 Chrome/Edge 使用（已安装时会由系统弹「打开 CC Switch？」）。
 - 提交：`5a98bc8e feat(chat): 客户端预设未安装时弹提示并跳转下载页（含安装探测）`（本地，未推送）。
+
+## 修复：令牌真实 Key 接口 429 限流（2026-08-08）
+
+- 现象：报错「Request failed with status code 429」。定位：POST /api/token/:id/key 挂 CriticalRateLimit，默认 20 次/20 分钟/IP；打开令牌行菜单会自动请求真实 Key，多次点击即触顶。
+- 修复：仅在本地开发 compose（docker-compose.dev.yml）加 CRITICAL_RATE_LIMIT=10000，生产 compose 不动；容器重建后 env 生效。
+- 验证：浏览器连续 5 次打开令牌菜单无 429 弹窗；后端日志无 429 状态码。
+- 提交：0ef72ced（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
