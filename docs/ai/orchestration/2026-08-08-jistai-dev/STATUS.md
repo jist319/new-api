@@ -17,6 +17,13 @@
 - 登录验证：✅ 通过真实 UI 登录成功 → `/dashboard/overview`（概览/创建密钥引导/钱包/用量正常，初始额度 $200）
 - 验证：`/api/status` → `success:true` + `setup:true`；首页/登录/控制台均 200
 
+
+## 当前阶段：品牌二开 · 全站 Logo 替换（2026-08-08）
+
+- 目标：把所有页面的 logo 换成 JistAI 品牌标识（来源 `D:\图片\logo\JistAi\JistAILogo.png`，1024×1024 PNG）。
+- 方案：前端 logo 单一来源 `DEFAULT_LOGO = '/logo.png'`（侧栏/顶栏/公共头/页脚/移动抽屉/favicon/登录页/设置页全走它），直接替换 `web/public/logo.png` 资产即可全覆盖；SVG `Logo` 组件为死代码未改动。
+- 验证：`bun run typecheck` ✅、`bun run build` ✅；镜像 `new-api-dev:local` 重建并重启容器；浏览器实测首页 header/footer 与 favicon、控制台侧栏均显示新 logo（截图 `.local-tests/ui-home-newlogo.png`、`.local-tests/ui-dashboard-newlogo.png`）。
+- 提交：`840fd0a1 feat(branding): 全站 logo 替换为 JistAI 品牌标识`（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
