@@ -1,4 +1,4 @@
-# 决策记录 · 2026-08-08-jistai-dev（只追加）
+﻿# 决策记录 · 2026-08-08-jistai-dev（只追加）
 
 ## D001 仓库锚点
 
@@ -38,3 +38,9 @@
 
 - 决定：pristine rc.24 的 `go test ./...` 在 `service` 包有 2 个全包运行时稳定失败、隔离运行通过的用例（channel affinity usage cache 相关）；`bun run lint` 存在约 20+ 处上游存量错误。二者均非本次改动引入，作为基线事实记录，不在此运行中修复，除非目标功能触及相关模块。
 - 影响：集成时若目标功能涉及 `service` 包或前端 lint 文件，先以「基线同样失败/同样报错」为对照，只验证「相对基线无新增回归」。
+
+## D009 环境固化与引导脚本
+
+- 决定：本机工具链固定为 Go 1.25.1（`D:\Codex\.tools\go`）+ Bun 1.3.14（npm 全局）；`GOPROXY`/`GOMODCACHE` 持久化到用户级 go env；用户 PATH 已加入 Go bin。
+- 决定：仓库根 `scripts/bootstrap.ps1` 为幂等引导入口（UTF-8 BOM，兼容 Windows PowerShell 5.1），新会话/子窗口先运行它再开发；`-Verify` 可选跑 `go build ./...` + `bun run typecheck` + `docker compose config --quiet`。
+- 原因：后续 Desktop 子窗口/新会话不继承本会话环境，需要可复现的恢复路径；BOM 解决中文注释在 Windows PowerShell 5.1 下的解析问题。
