@@ -24,6 +24,13 @@
 - 方案：前端 logo 单一来源 `DEFAULT_LOGO = '/logo.png'`（侧栏/顶栏/公共头/页脚/移动抽屉/favicon/登录页/设置页全走它），直接替换 `web/public/logo.png` 资产即可全覆盖；SVG `Logo` 组件为死代码未改动。
 - 验证：`bun run typecheck` ✅、`bun run build` ✅；镜像 `new-api-dev:local` 重建并重启容器；浏览器实测首页 header/footer 与 favicon、控制台侧栏均显示新 logo（截图 `.local-tests/ui-home-newlogo.png`、`.local-tests/ui-dashboard-newlogo.png`）。
 - 提交：`840fd0a1 feat(branding): 全站 logo 替换为 JistAI 品牌标识`（本地，未推送）。
+
+## 当前阶段：Logo 替换缓存修复（2026-08-08）
+
+- 现象：用户反馈「没看到更换」。排查结论：服务器已提供新 logo（哈希一致），但静态资源响应头 `Cache-Control: max-age=604800`（7 天），浏览器缓存了旧的 `/logo.png`，普通刷新不重新拉取。
+- 修复：改用**独立新文件名** `/jistai-logo.png`（新 URL 无缓存），并**恢复原版 `web/public/logo.png`**（上游资产保留，可回退）。改动点：新增 `web/public/jistai-logo.png`；`lib/constants.ts` `DEFAULT_LOGO='/jistai-logo.png'`；`index.html` favicon；`footer.tsx` 兜底路径。`index.html` 本身是 `no-cache`，普通刷新即可拿到新代码。
+- 验证：`bun run typecheck`/`build` ✅；镜像重建 + 容器重启；`curl /jistai-logo.png` = 222734（新图），`/logo.png` = 9597（原版）；浏览器实测首页 header/footer、登录页、favicon 均指向 `/jistai-logo.png`。
+- 提交：`9ae59c41 fix(branding): logo 改用独立文件 jistai-logo.png 绕过浏览器 7 天缓存`（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
