@@ -44,3 +44,8 @@
 - 决定：本机工具链固定为 Go 1.25.1（`D:\Codex\.tools\go`）+ Bun 1.3.14（npm 全局）；`GOPROXY`/`GOMODCACHE` 持久化到用户级 go env；用户 PATH 已加入 Go bin。
 - 决定：仓库根 `scripts/bootstrap.ps1` 为幂等引导入口（UTF-8 BOM，兼容 Windows PowerShell 5.1），新会话/子窗口先运行它再开发；`-Verify` 可选跑 `go build ./...` + `bun run typecheck` + `docker compose config --quiet`。
 - 原因：后续 Desktop 子窗口/新会话不继承本会话环境，需要可复现的恢复路径；BOM 解决中文注释在 Windows PowerShell 5.1 下的解析问题。
+## D010 STATUS.md 维护纪律（硬性要求）
+
+- 决定：每个阶段（调查/实现/验证/集成/部署/本地运行）结束、状态转换、阻塞变化时，**必须**更新 `docs/ai/orchestration/<run-id>/STATUS.md`，不允许遗漏或只写「无进展」。
+- 必填内容：基线 commit、已完成 / 进行中、验证结果（命令 + 结果）、阻塞、下一步唯一动作。
+- 新会话 / 子窗口 / 上下文压缩后恢复前，先读 `STATUS.md`；写完后以 git commit 固化（本地，不推送）。
