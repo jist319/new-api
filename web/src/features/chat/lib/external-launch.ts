@@ -45,10 +45,11 @@ export function getDownloadUrlForPreset(preset: ChatPreset): string {
 /**
  * Try to launch an external desktop app through a custom protocol link.
  *
- * Detection heuristic: browsers close the protocol tab automatically when the
- * OS successfully hands the link to an installed application. If the tab is
- * still open after a short delay (or the popup was blocked), we assume the app
- * is not installed, show a "please install" toast and open the download page.
+ * Detection: a hidden same-tab iframe attempts the protocol URL. When the OS
+ * hands the link to an installed application, the app window takes focus and
+ * our page fires a `blur` event; when no handler exists (or the launch is
+ * blocked) the page keeps focus. This avoids racing Chrome's native
+ * "Open …?" confirmation dialog and does not open an extra tab.
  *
  * @returns true when the app was (most likely) launched, false otherwise.
  */
@@ -56,25 +57,27 @@ export async function openExternalApp(
   preset: ChatPreset,
   resolvedUrl: string
 ): Promise<boolean> {
-  let win: Window | null = null
-  try {
-    win = window.open(resolvedUrl, '_blank', 'noopener')
-  } catch {
-    win = null
-  }
-
   const launched = await new Promise<boolean>((resolve) => {
+    let blurred = false
+    const onBlur = () => {
+      blurred = true
+    }
+    window.addEventListener('blur', onBlur)
+
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.src = resolvedUrl
+    document.body.appendChild(iframe)
+
     window.setTimeout(() => {
-      resolve(win !== null && win.closed)
-    }, 1800)
+      window.removeEventListener('blur', onBlur)
+      iframe.remove()
+      resolve(blurred)
+    }, 2500)
   })
 
   if (!launched) {
-    try {
-      if (win && !win.closed) win.close()
-    } catch {
-      /* ignore */
-    }
     toast.warning('请先安装此应用')
     // Use same-tab navigation so Chrome's popup blocker cannot swallow the
     // download page (the async detection has already lost user activation).
