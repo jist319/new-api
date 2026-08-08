@@ -178,6 +178,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：data-table-row-actions.tsx 一键配置按钮改为 DropdownMenu（CC Switch / Cherry Studio）；CC Switch 走现有「填入 CC Switch」弹窗（Claude/Codex/Gemini + 模型）；Cherry Studio 走 cherrystudio://providers/api-keys?v=1&data={cherryConfig} 深链一键导入（resolveChatUrl 生成 base64 配置），未安装时弹「请先安装此应用」并跳 cherryai.com.cn/download。
 - 验证：浏览器实测下拉显示两项；CC Switch 点击弹出导入弹窗；Cherry Studio 点击（协议被拦截场景）自动跳官方下载页。
 - 提交：52362c56 及 52362c56（本地，未推送）。
+
+## 修复：Cherry Studio 一键配置误跳下载页（2026-08-09）
+
+- 现象：Chrome 里点「一键配置 → Cherry Studio」被误判未安装，跳到下载页；本机已装 Cherry Studio（cherrystudio:// 已注册）。
+- 根因：旧探测（window.open 后 1.8s 检查标签是否关闭）跑赢 Chrome 的「打开 Cherry Studio?」原生确认框；iframe 方案在 Chrome 中不触发协议唤起（不适用）。
+- 修复：external-launch.ts 改回 window.open + 立即回焦，6 秒后判定：标签已关或窗口失焦（App 启动）→ 成功；否则弹「请先安装此应用」并跳下载页。
+- 验证：Chrome 实测点击后页面在 /keys 停留满 6 秒（不再 1.8s 误跳）；自动化无法点击 Chrome 原生确认框，真实用户确认后应正常唤起。
+- 提交：689338b3（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
