@@ -200,6 +200,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 实现：playground-history.tsx 增加 collapsed 状态：展开 240px 完整面板（头部含折叠按钮 PanelLeftClose + 新建对话）；折叠 40px 窄条（PanelLeftOpen 展开按钮）；7 语言包新增 Collapse history/Expand history。
 - 验证：typecheck/build ✅；浏览器实测 240→40→240，折叠后历史列表隐藏、可展开恢复。
 - 提交：779b51d2（本地，未推送）。
+
+## UI：历史折叠动画与精简（2026-08-09）
+
+- 需求：折叠加过渡动画；折叠后不再显示 40px 窄条，只保留展开 logo 按钮。
+- 实现：playground-history.tsx 面板改为常驻并动态切换宽度（w-60 ↔ w-0，overflow-hidden，	ransition-[width] duration-300）；折叠时面板宽度 0，左上角浮动「展开历史」按钮（nimate-in fade-in-0 slide-in-from-left-2）。
+- 验证：typecheck/build ✅；浏览器实测 240→0（无窄条、展开按钮出现）→240。
+- 提交：e3c70722（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
