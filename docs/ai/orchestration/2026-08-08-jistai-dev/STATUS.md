@@ -98,6 +98,13 @@
 av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title 置空、Playground 项 title 改 t('Chat')、预设项 title 改 t('Third-party Chat')；7 个语言包新增「Third-party Chat」key（zh=第三方聊天）。
 - 验证：typecheck/build ✅；镜像重建部署；浏览器实测侧栏显示「聊天 / 第三方聊天 / 常规…」，无小分组字。
 - 提交：0733c7c2（本地，未推送）。
+
+## UI：聊天 / 第三方聊天图标互换（2026-08-08）
+
+- 需求：互换侧栏「聊天」与「第三方聊天」的图标。
+- 改动：use-sidebar-data.ts 聊天项 icon MessageSquare、第三方聊天项 icon FlaskConical。
+- 验证：typecheck/build ✅；部署后浏览器 DOM 确认 lucide-message-square / lucide-flask-conical。
+- 提交：5f6452dd（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
