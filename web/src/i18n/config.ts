@@ -48,6 +48,7 @@ i18n
     supportedLngs: ['en', 'zhCN', 'fr', 'ru', 'ja', 'vi', 'zhTW'],
     load: 'currentOnly',
     nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
+    keySeparator: false, // Flat English keys contain dots (sentences) and URLs; do not split on '.'
     debug: import.meta.env.DEV,
     interpolation: {
       escapeValue: false, // not needed for react as it escapes by default
