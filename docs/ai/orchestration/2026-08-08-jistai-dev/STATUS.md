@@ -112,6 +112,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：data-table-row-actions.tsx 操作列新增「一键配置」按钮（Settings2 图标 + t('One-click Config')），点击打开 CC Switch 导入弹窗（resolveRealKey → setOpen('cc-switch')）；三点菜单移除 CC Switch 项（保留 复制密钥/复制连接信息/聊天/删除）；7 个语言包新增「One-click Config」key（zh=一键配置）。
 - 验证：typecheck/build ✅；部署后浏览器实测：操作列显示「一键配置」按钮，点击弹出「填入 CC Switch」弹窗（应用 Claude/Codex/Gemini、名称、主模型等）。
 - 提交：71d6c378（本地，未推送）。
+
+## UI：系统设置/个人资料侧边栏模块命名同步（2026-08-08）
+
+- 需求：系统设置 → 侧边栏模块 → 聊天区域里的「游乐场」「聊天」与侧栏新命名保持一致。
+- 改动：sidebar-modules-section.tsx 与 sidebar-modules-card.tsx 中 playground 模块 title 改 t('Chat')（聊天）、chat 模块 title 改 t('Third-party Chat')（第三方聊天）。
+- 验证：typecheck/build ✅；部署后浏览器实测系统设置侧边栏模块显示「聊天 / 第三方聊天」。
+- 提交：efd38f1c（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
