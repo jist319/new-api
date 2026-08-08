@@ -17,6 +17,10 @@ var Footer = ""
 var Logo = ""
 var TopUpLink = ""
 
+// RedemptionCodeLink is the external link used by the wallet "Get Redemption
+// Code" action; empty disables the entry.
+var RedemptionCodeLink = ""
+
 // var ChatLink = ""
 // var ChatLink2 = ""
 var QuotaPerUnit = 500 * 1000.0 // $0.002 / 1K tokens

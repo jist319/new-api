@@ -314,6 +314,9 @@ export function Wallet(props: WalletProps) {
                   onRedeem={handleRedeem}
                   redeeming={redeeming}
                   topupLink={topupInfo?.topup_link}
+                  redemptionCodeLink={
+                    (status?.RedemptionCodeLink as string) || ''
+                  }
                   loading={topupLoading}
                   priceRatio={(status?.price as number) || 1}
                   usdExchangeRate={effectiveUsdExchangeRate}

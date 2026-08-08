@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { parseCurrencyDisplayType } from '@/lib/currency'
 
 import { CheckinSettingsSection } from '../general/checkin-settings-section'
+import { RedemptionCodeSettingsSection } from '../general/redemption-code-settings-section'
 import { PricingSection } from '../general/pricing-section'
 import { QuotaSettingsSection } from '../general/quota-settings-section'
 import { PaymentSettingsSection } from '../integrations/payment-settings-section'
@@ -185,6 +186,15 @@ const BILLING_SECTIONS = [
           confirmedAt: settings['payment_setting.compliance_confirmed_at'] ?? 0,
           confirmedBy: settings['payment_setting.compliance_confirmed_by'] ?? 0,
         }}
+      />
+    ),
+  },
+  {
+    id: 'redemption-code',
+    titleKey: 'Redemption Code',
+    build: (settings: BillingSettings) => (
+      <RedemptionCodeSettingsSection
+        defaultValues={{ RedemptionCodeLink: settings.RedemptionCodeLink }}
       />
     ),
   },

@@ -5270,6 +5270,10 @@
     "Camera access cancelled or failed": "相機存取已取消或失敗",
     "Web search enabled": "已開啟聯網",
     "Unsupported file type": "暫不支援該檔案類型",
-    "History is stored only in this browser and is not synced to the server.": "歷史記錄僅保存在本瀏覽器，不會同步到伺服器。"
+    "History is stored only in this browser and is not synced to the server.": "歷史記錄僅保存在本瀏覽器，不會同步到伺服器。",
+    "Get Redemption Code": "獲取兌換碼",
+    "Redemption code link": "兌換碼連結",
+    "Link that the 'Get Redemption Code' button jumps to.": "「獲取兌換碼」按鈕跳轉的連結。",
+    "Save redemption code settings": "儲存兌換碼設定"
   }
 }

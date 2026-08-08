@@ -5270,6 +5270,10 @@
     "Camera access cancelled or failed": "Camera access cancelled or failed",
     "Web search enabled": "Web search enabled",
     "Unsupported file type": "Unsupported file type",
-    "History is stored only in this browser and is not synced to the server.": "History is stored only in this browser and is not synced to the server."
+    "History is stored only in this browser and is not synced to the server.": "History is stored only in this browser and is not synced to the server.",
+    "Get Redemption Code": "Get Redemption Code",
+    "Redemption code link": "Redemption code link",
+    "Link that the 'Get Redemption Code' button jumps to.": "Link that the 'Get Redemption Code' button jumps to.",
+    "Save redemption code settings": "Save redemption code settings"
   }
 }

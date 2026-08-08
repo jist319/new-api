@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Gift, ExternalLink, Loader2, Receipt, WalletCards } from 'lucide-react'
+import { Gift, ExternalLink, Loader2, Receipt, WalletCards, Ticket } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -73,6 +73,7 @@ interface RechargeFormCardProps {
   priceRatio?: number
   usdExchangeRate?: number
   onOpenBilling?: () => void
+  redemptionCodeLink?: string
   creemProducts?: CreemProduct[]
   enableCreemTopup?: boolean
   onCreemProductSelect?: (product: CreemProduct) => void
@@ -103,6 +104,7 @@ export function RechargeFormCard({
   priceRatio = 1,
   usdExchangeRate = 1,
   onOpenBilling,
+  redemptionCodeLink,
   creemProducts,
   enableCreemTopup,
   onCreemProductSelect,
@@ -202,16 +204,33 @@ export function RechargeFormCard({
       iconTone='success'
       disableHoverEffect
       action={
-        onOpenBilling ? (
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onOpenBilling}
-            className='w-full gap-2 sm:w-auto'
-          >
-            <Receipt className='h-4 w-4' />
-            {t('Order History')}
-          </Button>
+        redemptionCodeLink || onOpenBilling ? (
+          <div className='flex w-full items-center gap-2 sm:w-auto'>
+            {redemptionCodeLink ? (
+              <Button
+                variant='outline'
+                size='sm'
+                className='gap-2'
+                onClick={() =>
+                  window.open(redemptionCodeLink, '_blank', 'noopener')
+                }
+              >
+                <Ticket className='h-4 w-4' />
+                {t('Get Redemption Code')}
+              </Button>
+            ) : null}
+            {onOpenBilling ? (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={onOpenBilling}
+                className='w-full gap-2 sm:w-auto'
+              >
+                <Receipt className='h-4 w-4' />
+                {t('Order History')}
+              </Button>
+            ) : null}
+          </div>
         ) : null
       }
       contentClassName='space-y-4 sm:space-y-6'
