@@ -45,11 +45,12 @@ export function getDownloadUrlForPreset(preset: ChatPreset): string {
 /**
  * Try to launch an external desktop app through a custom protocol link.
  *
- * Detection: a hidden same-tab iframe attempts the protocol URL. When the OS
- * hands the link to an installed application, the app window takes focus and
- * our page fires a `blur` event; when no handler exists (or the launch is
- * blocked) the page keeps focus. This avoids racing Chrome's native
- * "Open …?" confirmation dialog and does not open an extra tab.
+ * Chrome opens the protocol URL in a new tab and shows its native
+ * "Open …?" confirmation dialog, then closes that tab once the OS hands the
+ * link to the installed application. We give the user time to confirm, and
+ * treat either the tab being closed or the window losing focus (the app took
+ * over) as success. Without a registered handler the tab stays open with an
+ * error page, so we fall back to a "please install" toast + download page.
  *
  * @returns true when the app was (most likely) launched, false otherwise.
  */
@@ -57,27 +58,32 @@ export async function openExternalApp(
   preset: ChatPreset,
   resolvedUrl: string
 ): Promise<boolean> {
+  let win: Window | null = null
+  try {
+    win = window.open(resolvedUrl, '_blank', 'noopener')
+  } catch {
+    win = null
+  }
+  // Refocus our window so opening the protocol tab alone is not mistaken for
+  // the app taking over.
+  try {
+    window.focus()
+  } catch {
+    /* ignore */
+  }
+
   const launched = await new Promise<boolean>((resolve) => {
-    let blurred = false
-    const onBlur = () => {
-      blurred = true
-    }
-    window.addEventListener('blur', onBlur)
-
-    const iframe = document.createElement('iframe')
-    iframe.style.display = 'none'
-    iframe.setAttribute('aria-hidden', 'true')
-    iframe.src = resolvedUrl
-    document.body.appendChild(iframe)
-
     window.setTimeout(() => {
-      window.removeEventListener('blur', onBlur)
-      iframe.remove()
-      resolve(blurred)
-    }, 2500)
+      resolve(win !== null && (win.closed || !document.hasFocus()))
+    }, 6000)
   })
 
   if (!launched) {
+    try {
+      if (win && !win.closed) win.close()
+    } catch {
+      /* ignore */
+    }
     toast.warning('请先安装此应用')
     // Use same-tab navigation so Chrome's popup blocker cannot swallow the
     // download page (the async detection has already lost user activation).
