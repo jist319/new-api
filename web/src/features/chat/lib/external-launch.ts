@@ -54,8 +54,7 @@ export function getDownloadUrlForPreset(preset: ChatPreset): string {
  */
 export async function openExternalApp(
   preset: ChatPreset,
-  resolvedUrl: string,
-  t: (key: string) => string
+  resolvedUrl: string
 ): Promise<boolean> {
   let win: Window | null = null
   try {
@@ -76,8 +75,10 @@ export async function openExternalApp(
     } catch {
       /* ignore */
     }
-    toast.warning(t('Please install this app first'))
-    window.open(getDownloadUrlForPreset(preset), '_blank', 'noopener')
+    toast.warning('请先安装此应用')
+    // Use same-tab navigation so Chrome's popup blocker cannot swallow the
+    // download page (the async detection has already lost user activation).
+    window.location.href = getDownloadUrlForPreset(preset)
     return false
   }
 

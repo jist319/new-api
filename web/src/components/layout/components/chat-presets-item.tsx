@@ -214,7 +214,7 @@ export function ChatPresetsItem({ item }: { item: NavChatPresets }) {
       if (typeof window === 'undefined') return
 
       if (preset.type === 'custom-protocol') {
-        await openExternalApp(preset, url, t)
+        await openExternalApp(preset, url)
       } else {
         window.open(url, '_blank', 'noopener')
       }

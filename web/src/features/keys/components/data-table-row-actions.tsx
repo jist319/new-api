@@ -125,7 +125,7 @@ export function DataTableRowActions<TData>({
         if (success) {
           toast.success(t('Sent the API key to FluentRead.'))
         } else {
-          toast.warning(t('Please install this app first'))
+          toast.warning('请先安装此应用')
           window.open(getDownloadUrlForPreset(preset), '_blank', 'noopener')
         }
         return
@@ -145,7 +145,7 @@ export function DataTableRowActions<TData>({
       if (typeof window === 'undefined') return
 
       if (preset.type === 'custom-protocol') {
-        await openExternalApp(preset, resolvedUrl, t)
+        await openExternalApp(preset, resolvedUrl)
       } else {
         try {
           window.open(resolvedUrl, '_blank', 'noopener')
