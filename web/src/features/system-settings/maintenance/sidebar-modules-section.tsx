@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Fragment, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -268,8 +268,12 @@ export function SidebarModulesSection({
                     // 令牌管理：附带「API 密钥操作菜单显示聊天入口」子开关
                     if (moduleKey === 'token' && sectionKey === 'console') {
                       return (
-                        <Fragment key={`${sectionKey}.token-group`}>
+                        <div
+                          key={`${sectionKey}.token-group`}
+                          className='md:col-span-2'
+                        >
                           {moduleSwitch}
+                          <div className='border-border/60 ml-5 border-l pl-4'>
                           <FormField
                             key={`${sectionKey}.actionsChat`}
                             control={form.control}
@@ -278,7 +282,9 @@ export function SidebarModulesSection({
                             render={({ field }) => (
                               <SettingsSwitchItem className='py-2'>
                                 <SettingsSwitchContent>
-                                  <FormLabel>{t('Show chat entry in API key actions')}</FormLabel>
+                                  <FormLabel className='text-muted-foreground text-xs'>
+                                    {t('Show chat entry in API key actions')}
+                                  </FormLabel>
                                   <FormDescription>
                                     {t(
                                       'Control whether the Chat menu appears in the API key row actions.'
@@ -302,7 +308,8 @@ export function SidebarModulesSection({
                               </SettingsSwitchItem>
                             )}
                           />
-                        </Fragment>
+                          </div>
+                        </div>
                       )
                     }
 
