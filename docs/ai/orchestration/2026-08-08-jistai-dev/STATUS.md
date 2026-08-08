@@ -140,6 +140,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：sidebar-modules-section.tsx token 组改为 md:col-span-2 容器：上方为令牌管理卡片，下方为带左边框、缩进的子开关（muted 小标题，随令牌管理/控制台区域禁用联动）。
 - 验证：typecheck/build ✅；部署后浏览器实测子项位于令牌管理下方（top 更大）且缩进（left 更大）。
 - 提交：8fc300d6（本地，未推送）。
+
+## 修复：第三方聊天 Lobe Chat 无法打开（2026-08-09）
+
+- 现象：侧栏「第三方聊天」点「Lobe Chat 官方示例」打不开。
+- 根因：https 类预设被当作 web 类型，侧栏点击进入 /chat/<id> 用 iframe 内嵌 LobeHub，而 LobeHub 禁止被嵌入（X-Frame-Options）→ 白屏。
+- 修复：chat-presets-item.tsx 移除 web 预设的 /chat/<id> 链接分支，统一改为按钮触发 handleOpenExternal（先取启用密钥 → esolveChatUrl → window.open 新标签直开）；web 类型不再提前 return。AI as Workspace 同步受益。
+- 验证：typecheck/build ✅；部署后浏览器实测点 Lobe Chat → 新标签打开 chat-preview.lobehub.com/?settings=...（含 apiKey/address）。
+- 提交：34e97134（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
