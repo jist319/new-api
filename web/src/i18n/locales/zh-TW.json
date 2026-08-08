@@ -5260,6 +5260,14 @@
     "New Chat": "新開對話",
     "No chat history yet": "暫無聊天歷史",
     "Collapse history": "摺疊歷史",
-    "Expand history": "展開歷史"
+    "Expand history": "展開歷史",
+    "Enable parameters": "參數總開關",
+    "Master switch: when off, no parameters are sent with the request.": "總開關：關閉時參數不會隨請求送出。",
+    "Attachments added": "已新增附件",
+    "Screenshot": "截圖",
+    "Photo": "照片",
+    "Screenshot capture cancelled or failed": "截圖已取消或失敗",
+    "Camera access cancelled or failed": "相機存取已取消或失敗",
+    "Web search enabled": "已開啟聯網"
   }
 }

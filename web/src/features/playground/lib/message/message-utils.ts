@@ -76,13 +76,15 @@ export function updateCurrentVersionContent(
  */
 export function createUserMessage(
   content: string,
-  createdAt: number = Date.now()
+  createdAt: number = Date.now(),
+  imageUrls: string[] = []
 ): Message {
   return {
     key: nanoid(),
     from: MESSAGE_ROLES.USER,
     versions: [createMessageVersion(content)],
     createdAt,
+    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
   }
 }
 
@@ -154,9 +156,13 @@ export function getTextContent(content: string | ContentPart[]): string {
  */
 export function formatMessageForAPI(message: Message): ChatCompletionMessage {
   const currentVersion = getCurrentVersion(message)
+  const imageUrls = message.imageUrls ?? []
   return {
     role: message.from,
-    content: currentVersion.content,
+    content:
+      imageUrls.length > 0
+        ? buildMessageContent(currentVersion.content, imageUrls)
+        : currentVersion.content,
   }
 }
 

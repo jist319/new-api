@@ -31,7 +31,10 @@ type UsePlaygroundConversationOptions = {
   updateMessages: (
     updater: Message[] | ((prev: Message[]) => Message[])
   ) => void
-  sendChat: (messages: Message[]) => void
+  sendChat: (
+    messages: Message[],
+    options?: { webSearch?: boolean }
+  ) => void
 }
 
 export function usePlaygroundConversation({
@@ -44,10 +47,10 @@ export function usePlaygroundConversation({
   )
 
   const handleSendMessage = useCallback(
-    (text: string) => {
-      const nextMessages = appendUserMessagePair(messages, text)
+    (text: string, imageUrls: string[] = [], webSearch = false) => {
+      const nextMessages = appendUserMessagePair(messages, text, imageUrls)
       updateMessages(nextMessages)
-      sendChat(nextMessages)
+      sendChat(nextMessages, { webSearch })
     },
     [messages, updateMessages, sendChat]
   )

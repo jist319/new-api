@@ -57,6 +57,7 @@ export const DEFAULT_CONFIG: PlaygroundConfig = {
 }
 
 export const DEFAULT_PARAMETER_ENABLED: ParameterEnabled = {
+  master: false,
   temperature: true,
   top_p: true,
   max_tokens: false,

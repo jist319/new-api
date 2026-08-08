@@ -20,7 +20,7 @@ import type { PlaygroundConfig, ParameterEnabled } from '../../types'
 
 type ParameterValue = PlaygroundConfig[keyof PlaygroundConfig]
 
-export type PlaygroundParameterKey = keyof ParameterEnabled
+export type PlaygroundParameterKey = Exclude<keyof ParameterEnabled, 'master'>
 
 export type PlaygroundParameterControl = {
   key: PlaygroundParameterKey

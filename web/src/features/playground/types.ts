@@ -49,6 +49,7 @@ export interface Message {
   isContentComplete?: boolean
   status?: MessageStatus
   errorCode?: string | null
+  imageUrls?: string[]
 }
 
 // API payload types
@@ -70,6 +71,7 @@ export interface ChatCompletionRequest {
   group?: string
   messages: ChatCompletionMessage[]
   stream: boolean
+  web_search_options?: { search_context_size?: string }
   temperature?: number
   top_p?: number
   max_tokens?: number
@@ -129,6 +131,7 @@ export interface PlaygroundConfig {
 }
 
 export interface ParameterEnabled {
+  master: boolean
   temperature: boolean
   top_p: boolean
   max_tokens: boolean

@@ -5260,6 +5260,14 @@
     "New Chat": "New Chat",
     "No chat history yet": "No chat history yet",
     "Collapse history": "Collapse history",
-    "Expand history": "Expand history"
+    "Expand history": "Expand history",
+    "Enable parameters": "Enable parameters",
+    "Master switch: when off, no parameters are sent with the request.": "Master switch: when off, no parameters are sent with the request.",
+    "Attachments added": "Attachments added",
+    "Screenshot": "Screenshot",
+    "Photo": "Photo",
+    "Screenshot capture cancelled or failed": "Screenshot capture cancelled or failed",
+    "Camera access cancelled or failed": "Camera access cancelled or failed",
+    "Web search enabled": "Web search enabled"
   }
 }

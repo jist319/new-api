@@ -37,6 +37,7 @@ export const playgroundConfigSchema = z.object({
 })
 
 export const parameterEnabledSchema = z.object({
+  master: z.boolean().optional(),
   temperature: z.boolean().optional(),
   top_p: z.boolean().optional(),
   max_tokens: z.boolean().optional(),
@@ -86,6 +87,7 @@ const messageSchema = z.object({
   isContentComplete: z.boolean().optional(),
   status: messageStatusSchema.optional(),
   errorCode: z.string().nullable().optional(),
+  imageUrls: z.array(z.string()).optional(),
 })
 
 export const messagesSchema = z.array(messageSchema)

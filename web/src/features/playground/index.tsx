@@ -100,7 +100,7 @@ export function Playground() {
           onRegenerateMessage={handleRegenerateMessage}
           onEditMessage={handleEditMessage}
           onDeleteMessage={handleDeleteMessage}
-          onSelectPrompt={handleSendMessage}
+          onSelectPrompt={(prompt) => handleSendMessage(prompt)}
           isGenerating={isGenerating}
           editingKey={editingMessageKey}
           onCancelEdit={handleEditOpenChange}
@@ -126,7 +126,9 @@ export function Playground() {
           onModelChange={(value) => updateConfig('model', value)}
           onParameterEnabledChange={updateParameterEnabled}
           onStop={stopGeneration}
-          onSubmit={handleSendMessage}
+          onSubmit={(text, imageUrls, webSearch) =>
+            handleSendMessage(text, imageUrls, webSearch)
+          }
           parameterEnabled={parameterEnabled}
             hasMessages={messages.length > 0}
           />

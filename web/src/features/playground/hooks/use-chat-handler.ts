@@ -242,7 +242,7 @@ export function useChatHandler({
 
   // Send streaming chat request
   const sendStreamingChat = useCallback(
-    (messages: Message[]) => {
+    (messages: Message[], options?: { webSearch?: boolean }) => {
       const generation = requestGenerationRef.current + 1
       requestGenerationRef.current = generation
       abortControllerRef.current?.abort()
@@ -252,7 +252,8 @@ export function useChatHandler({
       const payload = buildChatCompletionPayload(
         messages,
         config,
-        parameterEnabled
+        parameterEnabled,
+        options
       )
       void sendStreamRequest(
         payload,
@@ -274,11 +275,12 @@ export function useChatHandler({
 
   // Send non-streaming chat request
   const sendNonStreamingChat = useCallback(
-    async (messages: Message[]) => {
+    async (messages: Message[], options?: { webSearch?: boolean }) => {
       const payload = buildChatCompletionPayload(
         messages,
         config,
-        parameterEnabled
+        parameterEnabled,
+        options
       )
       const generation = requestGenerationRef.current + 1
       const abortController = new AbortController()
@@ -347,11 +349,11 @@ export function useChatHandler({
 
   // Send chat request (stream or non-stream based on config)
   const sendChat = useCallback(
-    (messages: Message[]) => {
+    (messages: Message[], options?: { webSearch?: boolean }) => {
       if (config.stream) {
-        sendStreamingChat(messages)
+        sendStreamingChat(messages, options)
       } else {
-        sendNonStreamingChat(messages)
+        sendNonStreamingChat(messages, options)
       }
     },
     [config.stream, sendStreamingChat, sendNonStreamingChat]

@@ -61,7 +61,7 @@ type PlaygroundParameterPanelProps = {
     value: PlaygroundConfig[K]
   ) => void
   onParameterEnabledChange: (
-    key: PlaygroundParameterKey,
+    key: keyof ParameterEnabled,
     value: boolean
   ) => void
   parameterEnabled: ParameterEnabled
@@ -80,6 +80,7 @@ function PlaygroundParameterContent({
   parameterEnabled,
 }: PlaygroundParameterContentProps) {
   const { t } = useTranslation()
+  const masterEnabled = parameterEnabled.master !== false
 
   const updateParameterConfig = (
     key: PlaygroundParameterKey,
@@ -101,8 +102,38 @@ function PlaygroundParameterContent({
         compact ? 'px-4 pb-4' : 'p-1'
       )}
     >
+      <div
+        className={cn(
+          'border-border/70 bg-background/60 grid gap-2 rounded-lg border p-3 transition-opacity',
+          disabled && 'opacity-55'
+        )}
+      >
+        <div className='flex items-start justify-between gap-3'>
+          <div className='min-w-0 space-y-1'>
+            <div className='flex min-w-0 items-center gap-2'>
+              <label className='truncate text-sm leading-5 font-medium'>
+                {t('Enable parameters')}
+              </label>
+            </div>
+            <p className='text-muted-foreground text-xs leading-4'>
+              {t('Master switch: when off, no parameters are sent with the request.')}
+            </p>
+          </div>
+          <Switch
+            aria-label={t('Enable parameters')}
+            checked={masterEnabled}
+            disabled={disabled}
+            onCheckedChange={(checked) =>
+              onParameterEnabledChange('master', checked)
+            }
+            size='sm'
+          />
+        </div>
+      </div>
+
       {PLAYGROUND_PARAMETER_CONTROLS.map((control) => {
         const enabled = parameterEnabled[control.key]
+        const controlDisabled = disabled || !masterEnabled
         const value = config[control.key]
         const controlId = `playground-${control.key}`
 
@@ -110,7 +141,7 @@ function PlaygroundParameterContent({
           <div
             className={cn(
               'border-border/70 bg-background/60 grid gap-2 rounded-lg border p-3 transition-opacity',
-              (!enabled || disabled) && 'opacity-55'
+              (!enabled || controlDisabled) && 'opacity-55'
             )}
             key={control.key}
           >
@@ -140,7 +171,7 @@ function PlaygroundParameterContent({
                   parameter: t(control.labelKey),
                 })}
                 checked={enabled}
-                disabled={disabled}
+                disabled={controlDisabled}
                 onCheckedChange={(checked) =>
                   onParameterEnabledChange(control.key, checked)
                 }
@@ -151,7 +182,7 @@ function PlaygroundParameterContent({
             {control.valueType === 'slider' ? (
               <Slider
                 className='py-1.5'
-                disabled={disabled || !enabled}
+                disabled={controlDisabled || !enabled}
                 id={controlId}
                 max={control.max}
                 min={control.min}
@@ -169,7 +200,7 @@ function PlaygroundParameterContent({
               />
             ) : (
               <Input
-                disabled={disabled || !enabled}
+                disabled={controlDisabled || !enabled}
                 id={controlId}
                 inputMode='numeric'
                 max={control.max}
@@ -198,9 +229,12 @@ function PlaygroundParameterContent({
 export function PlaygroundParameterPanel(props: PlaygroundParameterPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
-  const activeCount = PLAYGROUND_PARAMETER_CONTROLS.filter(
-    (control) => props.parameterEnabled[control.key]
-  ).length
+  const masterOn = props.parameterEnabled.master !== false
+  const activeCount = masterOn
+    ? PLAYGROUND_PARAMETER_CONTROLS.filter(
+        (control) => props.parameterEnabled[control.key]
+      ).length
+    : 0
 
   const trigger = (
     <PromptInputButton

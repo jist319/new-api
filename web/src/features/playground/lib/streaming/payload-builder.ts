@@ -30,7 +30,8 @@ import { formatMessageForAPI, isValidMessage } from '../message/message-utils'
 export function buildChatCompletionPayload(
   messages: Message[],
   config: PlaygroundConfig,
-  parameterEnabled: ParameterEnabled
+  parameterEnabled: ParameterEnabled,
+  options: { webSearch?: boolean } = {}
 ): ChatCompletionRequest {
   // Filter and format valid messages
   const processedMessages = messages
@@ -44,7 +45,9 @@ export function buildChatCompletionPayload(
     stream: config.stream,
   }
 
-  if (parameterEnabled.temperature) {
+  // 参数总开关：关闭时所有参数不随请求发送
+  if (parameterEnabled.master) {
+    if (parameterEnabled.temperature) {
     payload.temperature = config.temperature
   }
 
@@ -64,8 +67,14 @@ export function buildChatCompletionPayload(
     payload.presence_penalty = config.presence_penalty
   }
 
-  if (parameterEnabled.seed && config.seed !== null) {
-    payload.seed = config.seed
+    if (parameterEnabled.seed && config.seed !== null) {
+      payload.seed = config.seed
+    }
+  }
+
+  // 联网：启用时携带 web_search_options（由网关/上游决定是否真正执行搜索）
+  if (options.webSearch) {
+    payload.web_search_options = { search_context_size: 'medium' }
   }
 
   return payload

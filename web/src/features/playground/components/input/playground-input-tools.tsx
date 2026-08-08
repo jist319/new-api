@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { GlobeIcon, PaperclipIcon, Trash2Icon } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -38,11 +38,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-import {
-  ATTACHMENT_ACTIONS,
-  getAttachmentActionNotice,
-  getSearchActionNotice,
-} from '../../lib'
+import { ATTACHMENT_ACTIONS } from '../../lib'
 import type { ParameterEnabled, PlaygroundConfig } from '../../types'
 import { PlaygroundParameterPanel } from './playground-parameter-panel'
 
@@ -50,6 +46,7 @@ type PlaygroundInputToolsProps = {
   config: PlaygroundConfig
   disabled?: boolean
   hasMessages?: boolean
+  onAddAttachments: (items: { name: string; dataUrl: string }[]) => void
   onClearMessages?: () => void
   onConfigChange: <K extends keyof PlaygroundConfig>(
     key: K,
@@ -59,31 +56,118 @@ type PlaygroundInputToolsProps = {
     key: keyof ParameterEnabled,
     value: boolean
   ) => void
+  onSearchChange: (value: boolean) => void
   parameterEnabled: ParameterEnabled
+  searchEnabled: boolean
 }
 
 export function PlaygroundInputTools({
   config,
   disabled,
   hasMessages = false,
+  onAddAttachments,
   onClearMessages,
   onConfigChange,
   onParameterEnabledChange,
+  onSearchChange,
   parameterEnabled,
+  searchEnabled,
 }: PlaygroundInputToolsProps) {
   const { t } = useTranslation()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const readFilesAsDataUrls = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const items: { name: string; dataUrl: string }[] = []
+    let pending = files.length
+    for (const file of Array.from(files)) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          items.push({ name: file.name, dataUrl: reader.result })
+        }
+        pending -= 1
+        if (pending === 0 && items.length > 0) {
+          onAddAttachments(items)
+          toast.success(t('Attachments added'))
+        }
+      }
+      reader.onerror = () => {
+        pending -= 1
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const captureFromStream = async (
+    stream: MediaStream,
+    name: string
+  ): Promise<void> => {
+    try {
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.muted = true
+      await video.play()
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth || 1280
+      canvas.height = video.videoHeight || 720
+      const context = canvas.getContext('2d')
+      if (context) {
+        context.drawImage(video, 0, 0)
+        const dataUrl = canvas.toDataURL('image/png')
+        onAddAttachments([{ name, dataUrl }])
+        toast.success(t('Attachments added'))
+      }
+    } finally {
+      stream.getTracks().forEach((track) => track.stop())
+    }
+  }
+
+  const handleTakeScreenshot = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      })
+      await captureFromStream(
+        stream,
+        `${t('Screenshot')}-${Date.now()}.png`
+      )
+    } catch {
+      toast.error(t('Screenshot capture cancelled or failed'))
+    }
+  }
+
+  const handleTakePhoto = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      })
+      await captureFromStream(stream, `${t('Photo')}-${Date.now()}.png`)
+    } catch {
+      toast.error(t('Camera access cancelled or failed'))
+    }
+  }
 
   const handleFileAction = (action: string) => {
-    const notice = getAttachmentActionNotice(action)
-    toast.info(t(notice.title), {
-      description: notice.description,
-    })
+    if (action === 'take-screenshot') {
+      void handleTakeScreenshot()
+      return
+    }
+    if (action === 'take-photo') {
+      void handleTakePhoto()
+      return
+    }
+    // upload-file / upload-photo: 打开图片选择器（可多选）
+    fileInputRef.current?.click()
   }
 
   const handleSearchAction = () => {
-    const notice = getSearchActionNotice()
-    toast.info(t(notice.title))
+    onSearchChange(!searchEnabled)
+    if (!searchEnabled) {
+      toast.info(t('Web search enabled'))
+    }
   }
 
   const handleClearMessages = () => {
@@ -135,7 +219,7 @@ export function PlaygroundInputTools({
             render={
               <PromptInputButton
                 aria-label={t('Search')}
-                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 font-medium'
+                className={`${searchEnabled ? 'text-primary bg-muted/70' : 'text-muted-foreground'} hover:text-foreground hover:bg-muted/70 font-medium`}
                 disabled={disabled}
                 onClick={handleSearchAction}
                 variant='ghost'
@@ -187,6 +271,17 @@ export function PlaygroundInputTools({
         open={clearConfirmOpen}
         onOpenChange={setClearConfirmOpen}
         title={t('Clear chat history?')}
+      />
+      <input
+        ref={fileInputRef}
+        type='file'
+        accept='image/*'
+        multiple
+        className='hidden'
+        onChange={(event) => {
+          readFilesAsDataUrls(event.target.files)
+          event.target.value = ''
+        }}
       />
     </>
   )

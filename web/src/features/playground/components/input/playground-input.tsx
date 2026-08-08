@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -38,7 +39,7 @@ import { PlaygroundInputTools } from './playground-input-tools'
 
 interface PlaygroundInputProps {
   config: PlaygroundConfig
-  onSubmit: (text: string) => void
+  onSubmit: (text: string, imageUrls: string[], webSearch: boolean) => void
   onStop?: () => void
   disabled?: boolean
   isGenerating?: boolean
@@ -83,13 +84,37 @@ export function PlaygroundInput({
 }: PlaygroundInputProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
+  const [attachments, setAttachments] = useState<
+    { id: string; name: string; dataUrl: string }[]
+  >([])
+  const [webSearch, setWebSearch] = useState(false)
 
   const handleSubmit = (message: PromptInputMessage) => {
     const submittableText = getSubmittableInputText(message, disabled)
 
     if (!submittableText) return
-    onSubmit(submittableText)
+    onSubmit(
+      submittableText,
+      attachments.map((attachment) => attachment.dataUrl),
+      webSearch
+    )
     setText('')
+    setAttachments([])
+  }
+
+  const addAttachments = (items: { name: string; dataUrl: string }[]) => {
+    setAttachments((prev) => [
+      ...prev,
+      ...items.map((item, index) => ({
+        id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        name: item.name,
+        dataUrl: item.dataUrl,
+      })),
+    ])
+  }
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((item) => item.id !== id))
   }
 
   return (
@@ -99,6 +124,31 @@ export function PlaygroundInput({
         groupClassName='bg-background/95 dark:bg-background/80 border-border/70 shadow-[0_18px_60px_-32px_rgba(0,0,0,0.65)] ring-1 ring-foreground/5 rounded-xl overflow-hidden transition-all duration-200 focus-within:border-primary/45 focus-within:ring-primary/15 focus-within:shadow-[0_22px_70px_-34px_rgba(0,0,0,0.75)]'
         onSubmit={handleSubmit}
       >
+        {attachments.length > 0 && (
+          <div className='border-border/60 bg-muted/20 flex flex-wrap gap-2 border-b px-4 py-2'>
+            {attachments.map((attachment) => (
+              <div
+                key={attachment.id}
+                className='border-border/60 bg-background relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-md border'
+              >
+                <img
+                  src={attachment.dataUrl}
+                  alt={attachment.name}
+                  className='size-full object-cover'
+                />
+                <button
+                  type='button'
+                  aria-label={t('Delete')}
+                  className='bg-background/80 hover:bg-background absolute top-0.5 right-0.5 rounded-full p-0.5 text-muted-foreground hover:text-destructive'
+                  onClick={() => removeAttachment(attachment.id)}
+                >
+                  <X className='size-3' />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <PromptInputTextarea
           autoComplete='off'
           autoCorrect='off'
@@ -129,10 +179,13 @@ export function PlaygroundInput({
                 config={config}
                 disabled={disabled}
                 hasMessages={hasMessages}
+                onAddAttachments={addAttachments}
                 onConfigChange={onConfigChange}
                 onClearMessages={onClearMessages}
                 onParameterEnabledChange={onParameterEnabledChange}
+                onSearchChange={setWebSearch}
                 parameterEnabled={parameterEnabled}
+                searchEnabled={webSearch}
               />
             }
           />
