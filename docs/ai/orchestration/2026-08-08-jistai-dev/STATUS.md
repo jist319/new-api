@@ -239,6 +239,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：API 实测 gpt-5.4 → 200，web_search_preview 调用 3 次并计费（logs id=217，quota 53748）；Chrome UI 实测 gpt-5.5 开启联网回答真实新闻并带来源（响应 55.81s，截图 .local-tests/websearch-gpt.png）。
 - 注意：联网依赖渠道/模型支持（GPT-5.x 等）；DeepSeek 渠道不支持会报错；搜索+推理响应较慢属正常。
 - 提交：74f220f6 及 676a52e0/1ec2564f/fef1c269/74f220f6（本地，未推送）。
+
+## UI：历史面板底部隐私提示（2026-08-09）
+
+- 需求：历史面板底部加一行小字「历史记录仅保存在本浏览器，不会同步到服务器」，带信息图标。
+- 实现：playground-history.tsx 底部新增 Info 图标 + 提示；7 语言包新增 key。
+- 验证：typecheck/build ✅；浏览器实测提示与图标显示正常。
+- 提交：03f1f58d（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
