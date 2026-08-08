@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { History, PanelLeftClose, PanelLeftOpen, Plus, Trash2 } from 'lucide-react'
+import { History, Info, PanelLeftClose, PanelLeftOpen, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -131,6 +131,15 @@ export function PlaygroundHistoryPanel({
             ))}
           </ul>
         )}
+      </div>
+
+      <div className='text-muted-foreground flex items-start gap-1.5 border-t px-3 py-2'>
+        <Info className='mt-0.5 size-3.5 shrink-0' />
+        <p className='text-[11px] leading-4'>
+          {t(
+            'History is stored only in this browser and is not synced to the server.'
+          )}
+        </p>
       </div>
       </aside>
       {collapsed && (
