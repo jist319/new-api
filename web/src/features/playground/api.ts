@@ -24,6 +24,8 @@ import type {
   ChatCompletionResponse,
   ModelOption,
   GroupOption,
+  OpenAIResponsesRequest,
+  OpenAIResponsesResponse,
 } from './types'
 
 /**
@@ -34,6 +36,20 @@ export async function sendChatCompletion(
   signal?: AbortSignal
 ): Promise<ChatCompletionResponse> {
   const res = await api.post(API_ENDPOINTS.CHAT_COMPLETIONS, payload, {
+    signal,
+    skipErrorHandler: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Send OpenAI Responses request (non-streaming, used for web search)
+ */
+export async function sendResponsesRequest(
+  payload: OpenAIResponsesRequest,
+  signal?: AbortSignal
+): Promise<OpenAIResponsesResponse> {
+  const res = await api.post(API_ENDPOINTS.RESPONSES, payload, {
     signal,
     skipErrorHandler: true,
   } as Record<string, unknown>)

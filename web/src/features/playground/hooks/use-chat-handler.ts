@@ -20,11 +20,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { sendChatCompletion } from '../api'
+import { sendChatCompletion, sendResponsesRequest } from '../api'
 import { ERROR_MESSAGES } from '../constants'
 import {
   applyStreamingChunk,
   buildChatCompletionPayload,
+  buildResponsesPayload,
+  extractResponsesText,
   updateAssistantMessageWithError,
   updateLastAssistantMessage,
   parseRequestErrorDetails,
@@ -33,6 +35,7 @@ import {
   hasChatCompletionChoice,
   isAssistantMessageFinal,
   isAssistantMessagePending,
+  updateCurrentVersionContent,
 } from '../lib'
 import type { Message, PlaygroundConfig, ParameterEnabled } from '../types'
 import { useStreamRequest } from './use-stream-request'
@@ -347,9 +350,64 @@ export function useChatHandler({
     ]
   )
 
+  // Send web-search chat via the OpenAI Responses API (non-streaming)
+  const sendWebSearchChat = useCallback(
+    async (messages: Message[]) => {
+      const generation = requestGenerationRef.current + 1
+      requestGenerationRef.current = generation
+      abortControllerRef.current?.abort()
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+      setIsRequesting(true)
+      try {
+        const payload = buildResponsesPayload(messages, config)
+        const response = await sendResponsesRequest(
+          payload,
+          abortController.signal
+        )
+        if (
+          abortController.signal.aborted ||
+          requestGenerationRef.current !== generation
+        ) {
+          return
+        }
+        const text = extractResponsesText(response)
+        onMessageUpdate((prev) => {
+          if (requestGenerationRef.current !== generation) return prev
+          return updateLastAssistantMessage(prev, (message) =>
+            isAssistantMessagePending(message)
+              ? completeAssistantMessage(
+                  updateCurrentVersionContent(message, text)
+                )
+              : message
+          )
+        })
+      } catch (error: unknown) {
+        if (
+          abortController.signal.aborted ||
+          requestGenerationRef.current !== generation
+        ) {
+          return
+        }
+        const { errorCode, errorMessage } = parseRequestErrorDetails(error)
+        handleStreamError(generation, errorMessage, errorCode)
+      } finally {
+        if (requestGenerationRef.current === generation) {
+          abortControllerRef.current = null
+          setIsRequesting(false)
+        }
+      }
+    },
+    [config, onMessageUpdate, handleStreamError]
+  )
+
   // Send chat request (stream or non-stream based on config)
   const sendChat = useCallback(
     (messages: Message[], options?: { webSearch?: boolean }) => {
+      if (options?.webSearch) {
+        void sendWebSearchChat(messages)
+        return
+      }
       if (config.stream) {
         sendStreamingChat(messages, options)
       } else {

@@ -151,6 +151,39 @@ export interface ChatHistoryEntry {
   messages: Message[]
 }
 
+// OpenAI Responses API types (used by web-search chat)
+export interface OpenAIResponsesInputItem {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
+export interface OpenAIResponsesRequest {
+  model: string
+  input: OpenAIResponsesInputItem[]
+  tools?: { type: 'web_search_preview' }[]
+  web_search_options?: { search_context_size?: string }
+  stream: boolean
+  temperature?: number
+  top_p?: number
+  max_output_tokens?: number
+}
+
+export interface OpenAIResponsesResponse {
+  id?: string
+  model?: string
+  status?: string
+  output?: Array<{
+    type: string
+    content?: Array<{ type: string; text?: string; annotations?: unknown[] }>
+    name?: string
+  }>
+  usage?: {
+    input_tokens?: number
+    output_tokens?: number
+    total_tokens?: number
+  }
+}
+
 // Model and group options
 export interface ModelOption {
   label: string
