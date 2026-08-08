@@ -246,6 +246,15 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 实现：playground-history.tsx 底部新增 Info 图标 + 提示；7 语言包新增 key。
 - 验证：typecheck/build ✅；浏览器实测提示与图标显示正常。
 - 提交：03f1f58d（本地，未推送）。
+
+## 功能：钱包「获取兑换码」+ 计费设置「兑换码」链接（2026-08-09）
+
+- 需求：钱包-资金-历史订单 下加「获取兑换码」点击跳转；系统设置-计费与支付 加「兑换码」可配置跳转链接。
+- 后端：新增选项 RedemptionCodeLink（common/constants.go 默认空、model/option.go 映射+更新、controller/misc.go 状态暴露）。
+- 前端：新增 redemption-code-settings-section（兑换码链接输入+保存）；billing 注册表加「兑换码」分区；充值卡 action 区加「获取兑换码」按钮（window.open 新标签，仅配置链接后显示）。
+- 验证：go build/typecheck/build ✅；Chrome(admin) 实测计费导航出现「兑换码」且链接输入生效；钱包显示「获取兑换码」；选项 PUT 后 /api/status 返回 RedemptionCodeLink。
+- 备注：当前测试值为 https://example.com/redeem，正式链接请在设置里填写。
+- 提交：39aa2ea3（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
