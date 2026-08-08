@@ -19,7 +19,6 @@ For commercial licensing, please contact support@quantumnous.com
 package controller
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -27,7 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/QuantumNous/new-api/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -95,10 +93,6 @@ func WebChatLobeProxy(c *gin.Context) {
 			resp.Header.Set("Content-Length", strconv.Itoa(len(rewritten)))
 		}
 		resp.Header.Set("Cache-Control", "no-store")
-		// Temporary diagnostics: find JS requests that come back as HTML.
-		if strings.Contains(resp.Request.URL.Path, ".js") && strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
-			common.SysLog(fmt.Sprintf("[webchat-diag] JS->HTML %s %s -> %d %s", resp.Request.Method, resp.Request.URL.Path, resp.StatusCode, resp.Header.Get("Content-Type")))
-		}
 		return nil
 	}
 
