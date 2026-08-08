@@ -193,6 +193,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 实现：新增 lib/storage/history.ts（load/upsert/delete/clear，上限 50 条）；use-playground-state.ts 增加 history 状态与自动保存（回复完成后 800ms 去抖写入，标题=首条用户消息，含 model/group），刷新页面按标题+消息数匹配复用条目避免重复，加载历史/新建对话/删除历史处理方法；新增 components/history/playground-history.tsx 左侧面板（历史列表 + 新建对话 + 删除）；index.tsx 布局改为左面板+主列；7 语言包新增 History/New Chat/No chat history yet。
 - 验证：typecheck/build ✅；浏览器实测面板显示、发消息后自动生成历史条目（标题+时间+模型）、刷新不重复（2→2）。
 - 提交：6e53213e（本地，未推送）。
+
+## 功能：历史面板折叠/展开（2026-08-09）
+
+- 需求：历史面板可折叠，聊天区获得更大空间；折叠后保留窄条入口可再展开。
+- 实现：playground-history.tsx 增加 collapsed 状态：展开 240px 完整面板（头部含折叠按钮 PanelLeftClose + 新建对话）；折叠 40px 窄条（PanelLeftOpen 展开按钮）；7 语言包新增 Collapse history/Expand history。
+- 验证：typecheck/build ✅；浏览器实测 240→40→240，折叠后历史列表隐藏、可展开恢复。
+- 提交：779b51d2（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
