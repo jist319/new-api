@@ -75,7 +75,12 @@ function toBase64(value: string) {
 }
 
 export function detectChatLinkType(url: string): ChatLinkType {
-  if (HTTP_REGEX.test(url)) {
+  if (
+    HTTP_REGEX.test(url) ||
+    url.startsWith('{origin}') ||
+    url.startsWith('{address}') ||
+    url.startsWith('/')
+  ) {
     return 'web'
   }
   if (url.toLowerCase().startsWith('fluent')) {
@@ -190,6 +195,8 @@ export function resolveChatUrl({
   }
 
   if (safeServerAddress) {
+    // {origin} is replaced raw (no encoding) for same-origin proxy mounts
+    url = replaceToken(url, '{origin}', safeServerAddress)
     const encodedAddress = encodeURIComponent(safeServerAddress)
     url = replaceToken(url, '{address}', encodedAddress)
   }

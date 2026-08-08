@@ -22,6 +22,9 @@ type WebAssets struct {
 func SetWebRouter(router *gin.Engine, assets WebAssets) {
 	frontendFS := common.EmbedFolder(assets.BuildFS, "web/dist")
 
+	// 第三方聊天同源代理（LobeChat Web 内嵌用）
+	router.Any("/webchat/lobe/*path", controller.WebChatLobeProxy)
+
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 	router.Use(middleware.GlobalWebRateLimit())
 	router.Use(middleware.Cache())
