@@ -5250,5 +5250,7 @@
     "Zhipu V4": "智譜 V4",
     "Zoom": "縮放"
   },
-  "Please install this app first": "請先安裝此應用"
+  "Please install this app first": "請先安裝此應用",
+  "No enabled API keys found. Create or enable one first.": "找不到已啟用的 API 金鑰，請先建立或啟用一個。",
+  "Failed to load API key": "載入 API 金鑰失敗"
 }

@@ -188,7 +188,7 @@ export function ChatPresetsItem({ item }: { item: NavChatPresets }) {
         } catch (error) {
           const message =
             error instanceof Error
-              ? error.message
+              ? t(error.message)
               : t(
                   'Unable to prepare chat link. Please ensure you have an enabled API key.'
                 )
