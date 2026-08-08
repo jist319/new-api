@@ -75,6 +75,14 @@
 - 修复：提示硬编码为中文「请先安装此应用」（不随浏览器语言）；下载页改为 \window.location.href\ **当前标签直接跳转**（不受弹窗拦截影响），并在跳转前关闭协议占位标签。
 - 验证：应用内浏览器实测 CC Switch → 当前标签跳转 ccswitch.io/zh/ 成功；typecheck/build ✅。真实 Chrome 行为待用户复测。
 - 提交：5af09ce9（本地，未推送）。
+
+## 修复：无密钥报错随系统语言翻译（2026-08-08）
+
+- 现象：普通用户无启用密钥点「聊天」预设报英文「No enabled API keys found...」，需按界面语言显示中文。
+- 根因（三层）：① 报错消息在 use-active-chat-key.ts 抛英文 Error，展示处直接 error.message（已改为 	(error.message)）；② i18n 未关 keySeparator（已补 keySeparator:false）；③ **真正主因**：locale 文件实际是 { "translation": {...} } 结构，此前用脚本追加的 3 个新 key（请先安装此应用 / No enabled API keys... / Failed to load API key）被加到了**顶层**而非 translation 内，i18next 在 namespace 中找不到 → 恒返回英文 key。
+- 修复：用 Node 把 7 个语言包中 3 个 key 移入 	ranslation 对象（保持 2 空格缩进，diff 极小）；移除临时调试日志。
+- 验证：应用内浏览器实测 nokeytest 用户点 CC Switch → toast 显示「未找到已启用的 API 密钥，请先创建或启用一个。」；typecheck/build ✅。
+- 提交：cef0efc0（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
