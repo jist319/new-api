@@ -90,6 +90,14 @@
 - 测试用户：nokeytest（角色普通用户），额度 5,000,000（本地测试直接 UPDATE users；后台 EditWithTx 不更新 quota，属上游行为，生产用充值流程）；创建令牌 E2E-令牌（分组需设为 default 才能匹配渠道，Redis 令牌缓存重启后刷新）。
 - 结果：① 渠道测试 ✅；② 用户登录/令牌创建/取密钥 ✅；③ 直接 API POST /v1/chat/completions（Bearer sk-...）✅ 返回 DeepSeek 中文回复；④ Playground 网页聊天 ✅（回复 1.22s）；⑤ 计费扣减 ✅（用户额度 5,000,000→4,999,994，令牌 used_quota 0→6）；⑥ 使用日志 ✅（logs id=52: deepseek-chat, 10+36 tokens, quota 6）；⑦ 无密钥中文报错 ✅（此前修复验证）。
 - 遗留提示：AddToken 默认空分组，用户需默认 default 分组才能用渠道（可考虑二开改进：新建令牌默认填 default）。
+
+## UI：侧栏聊天导航文案调整（2026-08-08）
+
+- 需求：① 去掉「游乐场」上方的小「聊天」分组字；②「游乐场」改名「聊天」；③ 预设菜单「聊天」改名「第三方聊天」。
+- 改动：
+av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title 置空、Playground 项 title 改 t('Chat')、预设项 title 改 t('Third-party Chat')；7 个语言包新增「Third-party Chat」key（zh=第三方聊天）。
+- 验证：typecheck/build ✅；镜像重建部署；浏览器实测侧栏显示「聊天 / 第三方聊天 / 常规…」，无小分组字。
+- 提交：0733c7c2（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
