@@ -23,10 +23,10 @@ import {
   Power,
   PowerOff,
   ExternalLink,
-  ArrowRightLeft,
   Copy,
   Link,
   Loader2,
+  Settings2,
 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -114,6 +114,14 @@ export function DataTableRowActions<TData>({
     toast.info(t('API key is loading, please try again in a moment'))
     return null
   }, [apiKey.id, resolvedRealKey, resolveRealKey, t])
+
+  const handleOpenCCSwitch = useCallback(async () => {
+    const realKey = await resolveRealKey(apiKey.id)
+    if (!realKey) return
+    setResolvedKey(realKey)
+    setCurrentRow(apiKey)
+    setOpen('cc-switch')
+  }, [apiKey.id, resolveRealKey, setResolvedKey, setCurrentRow, setOpen])
 
   const handleOpenChatPreset = useCallback(
     async (preset: ChatPreset) => {
@@ -234,6 +242,16 @@ export function DataTableRowActions<TData>({
         <TooltipContent>{t('Edit')}</TooltipContent>
       </Tooltip>
 
+      <Button
+        variant='ghost'
+        size='sm'
+        onClick={handleOpenCCSwitch}
+        className='gap-1.5 px-2 text-muted-foreground hover:text-foreground'
+      >
+        <Settings2 className='size-4' />
+        <span>{t('One-click Config')}</span>
+      </Button>
+
       <DataTableRowActionMenu
         ariaLabel={t('Open menu')}
         contentClassName='w-[200px]'
@@ -271,20 +289,6 @@ export function DataTableRowActions<TData>({
           </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={async () => {
-            const realKey = await resolveRealKey(apiKey.id)
-            if (!realKey) return
-            setResolvedKey(realKey)
-            setCurrentRow(apiKey)
-            setOpen('cc-switch')
-          }}
-        >
-          {t('CC Switch')}
-          <DropdownMenuShortcut>
-            <ArrowRightLeft size={16} />
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
         {hasChatPresets && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>{t('Chat')}</DropdownMenuSubTrigger>

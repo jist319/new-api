@@ -5252,6 +5252,7 @@
     "Please install this app first": "请先安装此应用",
     "No enabled API keys found. Create or enable one first.": "未找到已启用的 API 密钥，请先创建或启用一个。",
     "Failed to load API key": "加载 API 密钥失败",
-    "Third-party Chat": "第三方聊天"
+    "Third-party Chat": "第三方聊天",
+    "One-click Config": "一键配置"
   }
 }
