@@ -186,6 +186,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：external-launch.ts 改回 window.open + 立即回焦，6 秒后判定：标签已关或窗口失焦（App 启动）→ 成功；否则弹「请先安装此应用」并跳下载页。
 - 验证：Chrome 实测点击后页面在 /keys 停留满 6 秒（不再 1.8s 误跳）；自动化无法点击 Chrome 原生确认框，真实用户确认后应正常唤起。
 - 提交：689338b3（本地，未推送）。
+
+## 功能：聊天页左侧「历史」面板（本地浏览器保存，2026-08-09）
+
+- 需求：聊天（Playground）页左侧加「历史」，会话记录保存在用户浏览器 localStorage。
+- 实现：新增 lib/storage/history.ts（load/upsert/delete/clear，上限 50 条）；use-playground-state.ts 增加 history 状态与自动保存（回复完成后 800ms 去抖写入，标题=首条用户消息，含 model/group），刷新页面按标题+消息数匹配复用条目避免重复，加载历史/新建对话/删除历史处理方法；新增 components/history/playground-history.tsx 左侧面板（历史列表 + 新建对话 + 删除）；index.tsx 布局改为左面板+主列；7 语言包新增 History/New Chat/No chat history yet。
+- 验证：typecheck/build ✅；浏览器实测面板显示、发消息后自动生成历史条目（标题+时间+模型）、刷新不重复（2→2）。
+- 提交：6e53213e（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
