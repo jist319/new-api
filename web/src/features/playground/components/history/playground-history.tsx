@@ -56,24 +56,14 @@ export function PlaygroundHistoryPanel({
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
 
-  // Collapsed state: a slim strip that can be expanded again.
-  if (collapsed) {
-    return (
-      <aside className='bg-muted/20 flex w-10 shrink-0 flex-col items-center gap-2 border-r py-2'>
-        <Button
-          variant='ghost'
-          size='icon-sm'
-          aria-label={t('Expand history')}
-          onClick={() => setCollapsed(false)}
-        >
-          <PanelLeftOpen className='size-4' />
-        </Button>
-      </aside>
-    )
-  }
-
   return (
-    <aside className='bg-muted/20 hidden w-60 shrink-0 flex-col border-r md:flex'>
+    <>
+      <aside
+        className={cn(
+          'bg-muted/20 hidden shrink-0 flex-col overflow-hidden border-r transition-[width] duration-300 ease-in-out md:flex',
+          collapsed ? 'w-0 border-r-0' : 'w-60'
+        )}
+      >
       <div className='flex items-center justify-between gap-2 border-b px-3 py-2.5'>
         <div className='flex items-center gap-1.5 text-sm font-medium'>
           <History className='size-4' />
@@ -142,6 +132,18 @@ export function PlaygroundHistoryPanel({
           </ul>
         )}
       </div>
-    </aside>
+      </aside>
+      {collapsed && (
+        <Button
+          variant='ghost'
+          size='icon-sm'
+          aria-label={t('Expand history')}
+          onClick={() => setCollapsed(false)}
+          className='animate-in fade-in-0 slide-in-from-left-2 absolute left-2 top-2 z-10 duration-200'
+        >
+          <PanelLeftOpen className='size-4' />
+        </Button>
+      )}
+    </>
   )
 }
