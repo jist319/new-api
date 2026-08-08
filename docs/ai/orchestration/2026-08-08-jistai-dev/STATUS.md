@@ -133,6 +133,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：sidebar-modules-section.tsx 子开关改为 Fragment 平铺（不再占整行下方）；use-sidebar-config.ts console 配置把 token 提到首位，使网格第一行为「令牌管理 | 聊天入口开关」。
 - 验证：typecheck/build ✅；部署后浏览器实测两者 top 坐标一致（同排）。
 - 提交：f61eb5ea（本地，未推送）。
+
+## UI：聊天入口开关改为令牌管理下方子项（2026-08-09）
+
+- 需求：把「API 密钥操作菜单显示聊天入口」作为子项放在令牌管理下方（非并排）。
+- 改动：sidebar-modules-section.tsx token 组改为 md:col-span-2 容器：上方为令牌管理卡片，下方为带左边框、缩进的子开关（muted 小标题，随令牌管理/控制台区域禁用联动）。
+- 验证：typecheck/build ✅；部署后浏览器实测子项位于令牌管理下方（top 更大）且缩进（left 更大）。
+- 提交：8fc300d6（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
