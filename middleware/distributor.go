@@ -102,6 +102,26 @@ func Distribute() func(c *gin.Context) {
 					}
 				}
 
+				// check path is /pg/responses (same group override as chat)
+				if strings.HasPrefix(c.Request.URL.Path, "/pg/responses") {
+					responsesRequest := &struct {
+						Group string `json:"group"`
+					}{}
+					err = common.UnmarshalBodyReusable(c, responsesRequest)
+					if err != nil {
+						abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorInvalidPlayground, map[string]any{"Error": err.Error()}))
+						return
+					}
+					if responsesRequest.Group != "" {
+						if !service.GroupInUserUsableGroups(usingGroup, responsesRequest.Group) && responsesRequest.Group != usingGroup {
+							abortWithOpenAiMessage(c, http.StatusForbidden, i18n.T(c, i18n.MsgDistributorGroupAccessDenied))
+							return
+						}
+						usingGroup = responsesRequest.Group
+						common.SetContextKey(c, constant.ContextKeyUsingGroup, usingGroup)
+					}
+				}
+
 				if preferredChannelID, found := service.GetPreferredChannelByAffinity(c, modelRequest.Model, usingGroup); found {
 					affinityUsable := false
 					preferred, err := model.CacheGetChannel(preferredChannelID)

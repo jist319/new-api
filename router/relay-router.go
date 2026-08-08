@@ -1,10 +1,6 @@
 package router
 
 import (
-	"bytes"
-	"io"
-
-	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/controller"
 	"github.com/QuantumNous/new-api/middleware"
@@ -70,18 +66,6 @@ func SetRelayRouter(router *gin.Engine) {
 	{
 		playgroundRouter.POST("/chat/completions", controller.Playground)
 		playgroundRouter.POST("/responses", func(c *gin.Context) {
-			// 会话用户显式指定分组（Responses 请求体带 group 字段）
-			body, readErr := io.ReadAll(c.Request.Body)
-			if readErr == nil {
-				c.Request.Body = io.NopCloser(bytes.NewReader(body))
-				var payload struct {
-					Group string `json:"group"`
-				}
-				if common.Unmarshal(body, &payload) == nil && payload.Group != "" {
-					c.Set(string(constant.ContextKeyUsingGroup), payload.Group)
-					c.Set(string(constant.ContextKeyTokenGroup), payload.Group)
-				}
-			}
 			controller.Relay(c, types.RelayFormatOpenAIResponses)
 		})
 	}
