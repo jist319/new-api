@@ -83,6 +83,13 @@
 - 修复：用 Node 把 7 个语言包中 3 个 key 移入 	ranslation 对象（保持 2 空格缩进，diff 极小）；移除临时调试日志。
 - 验证：应用内浏览器实测 nokeytest 用户点 CC Switch → toast 显示「未找到已启用的 API 密钥，请先创建或启用一个。」；typecheck/build ✅。
 - 提交：cef0efc0（本地，未推送）。
+
+## E2E：用户使用场景完整测试（2026-08-08，DeepSeek 渠道）
+
+- 渠道：添加 DeepSeek（type=43，BaseURL https://api.deepseek.com，模型 deepseek-chat/deepseek-reasoner），API Key 仅存本地 DB 渠道配置（未进代码/账本，报告打码）；渠道测试连通 0.67s。
+- 测试用户：nokeytest（角色普通用户），额度 5,000,000（本地测试直接 UPDATE users；后台 EditWithTx 不更新 quota，属上游行为，生产用充值流程）；创建令牌 E2E-令牌（分组需设为 default 才能匹配渠道，Redis 令牌缓存重启后刷新）。
+- 结果：① 渠道测试 ✅；② 用户登录/令牌创建/取密钥 ✅；③ 直接 API POST /v1/chat/completions（Bearer sk-...）✅ 返回 DeepSeek 中文回复；④ Playground 网页聊天 ✅（回复 1.22s）；⑤ 计费扣减 ✅（用户额度 5,000,000→4,999,994，令牌 used_quota 0→6）；⑥ 使用日志 ✅（logs id=52: deepseek-chat, 10+36 tokens, quota 6）；⑦ 无密钥中文报错 ✅（此前修复验证）。
+- 遗留提示：AddToken 默认空分组，用户需默认 default 分组才能用渠道（可考虑二开改进：新建令牌默认填 default）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
