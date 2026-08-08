@@ -223,6 +223,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 联网：开关已透传 web_search_options；DeepSeek 忽略该参数但请求正常（200）；真实联网需支持 web_search 的渠道；本机 DDG 等免费搜索 API 不可达（http=000），无法做免费兜底搜索。
 - 实测（本机应用内浏览器）：上传 test-note.txt → chips + 注入 → DeepSeek 正确回答文件内容 ✅；图片上传链路正常（报错仅为 DeepSeek 不支持视觉）。
 - 提交：9171a4af 及 9171a4af（本地，未推送）。
+
+## 测试：GPT 中转渠道 zzone.cc.cd（2026-08-09）
+
+- 用户提供 OpenAI 兼容 key + https://zzone.cc.cd/v1。配置渠道 GPT-zzone（type=1），发现 base_url 不能带 /v1（new-api 自动拼 /v1），已改为 https://zzone.cc.cd。
+- 诊断：zzone 本身是 new-api 网关；/v1/models 实测支持 gpt-5.4/gpt-5.5/gpt-5.6-sol/gpt-5.6-terra/codex-auto-review（gpt-4o-mini 等不可用，已更新渠道模型与 abilities）。
+- 结果：连接/鉴权/模型路由全部正常；真实调用返回 **403 Insufficient account balance（zzone 账户余额不足）**，充值后可复用。
+- 临时调试代码（distributor/channel_cache/channel_select）已全部还原；key 仅存本地 DB（打码记录）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
