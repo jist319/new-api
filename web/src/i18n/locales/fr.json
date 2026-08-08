@@ -5255,6 +5255,11 @@
     "Third-party Chat": "Third-party Chat",
     "One-click Config": "One-click Config",
     "Show chat entry in API key actions": "Show chat entry in API key actions",
-    "Control whether the Chat menu appears in the API key row actions.": "Control whether the Chat menu appears in the API key row actions."
+    "Control whether the Chat menu appears in the API key row actions.": "Control whether the Chat menu appears in the API key row actions.",
+    "History": "History",
+    "New Chat": "New Chat",
+    "No chat history yet": "No chat history yet",
+    "Collapse history": "Collapse history",
+    "Expand history": "Expand history"
   }
 }

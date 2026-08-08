@@ -16,7 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { History, Plus, Trash2 } from 'lucide-react'
+import { History, PanelLeftClose, PanelLeftOpen, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -53,6 +54,23 @@ export function PlaygroundHistoryPanel({
   onDelete,
 }: PlaygroundHistoryPanelProps) {
   const { t } = useTranslation()
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Collapsed state: a slim strip that can be expanded again.
+  if (collapsed) {
+    return (
+      <aside className='bg-muted/20 flex w-10 shrink-0 flex-col items-center gap-2 border-r py-2'>
+        <Button
+          variant='ghost'
+          size='icon-sm'
+          aria-label={t('Expand history')}
+          onClick={() => setCollapsed(false)}
+        >
+          <PanelLeftOpen className='size-4' />
+        </Button>
+      </aside>
+    )
+  }
 
   return (
     <aside className='bg-muted/20 hidden w-60 shrink-0 flex-col border-r md:flex'>
@@ -61,15 +79,25 @@ export function PlaygroundHistoryPanel({
           <History className='size-4' />
           <span>{t('History')}</span>
         </div>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='gap-1 px-2 text-xs'
-          onClick={onNew}
-        >
-          <Plus className='size-3.5' />
-          {t('New Chat')}
-        </Button>
+        <div className='flex items-center gap-1'>
+          <Button
+            variant='ghost'
+            size='icon-sm'
+            aria-label={t('Collapse history')}
+            onClick={() => setCollapsed(true)}
+          >
+            <PanelLeftClose className='size-4' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='gap-1 px-2 text-xs'
+            onClick={onNew}
+          >
+            <Plus className='size-3.5' />
+            {t('New Chat')}
+          </Button>
+        </div>
       </div>
 
       <div className='flex-1 overflow-y-auto p-2'>

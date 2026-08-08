@@ -5255,6 +5255,11 @@
     "Third-party Chat": "第三方聊天",
     "One-click Config": "一鍵配置",
     "Show chat entry in API key actions": "API 金鑰操作選單顯示聊天入口",
-    "Control whether the Chat menu appears in the API key row actions.": "控制 API 金鑰操作列三點選單中是否顯示聊天入口。"
+    "Control whether the Chat menu appears in the API key row actions.": "控制 API 金鑰操作列三點選單中是否顯示聊天入口。",
+    "History": "歷史",
+    "New Chat": "新開對話",
+    "No chat history yet": "暫無聊天歷史",
+    "Collapse history": "摺疊歷史",
+    "Expand history": "展開歷史"
   }
 }
