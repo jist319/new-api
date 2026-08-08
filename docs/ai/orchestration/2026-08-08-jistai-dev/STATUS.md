@@ -215,6 +215,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 参数总开关：ParameterEnabled 增加 master（默认 false，storage schema 同步）；参数面板顶部「参数总开关」默认关闭，关闭时所有参数不随请求发送、控件禁用。
 - 验证：typecheck/build ✅；浏览器实测附件菜单四项、联网开关激活、总开关默认关且参数禁用；zh 文案 附件/截屏 对齐。
 - 提交：b7c567f2 及 d472d29（本地，未推送）。
+
+## 附件/联网问题修复与实测（2026-08-09）
+
+- 图片报错根因：unknown variant image_url 来自 **DeepSeek 上游**（其 Rust 后端不支持 image_url，直接调用复现 400）；网关透传正常，换视觉模型渠道即可。
+- 文件类型：附件支持扩大为 图片 + 文本类文件（txt/md/csv/json/代码等，读取前 20000 字符注入为上下文）；其它二进制提示「暂不支持该文件类型」。
+- 联网：开关已透传 web_search_options；DeepSeek 忽略该参数但请求正常（200）；真实联网需支持 web_search 的渠道；本机 DDG 等免费搜索 API 不可达（http=000），无法做免费兜底搜索。
+- 实测（本机应用内浏览器）：上传 test-note.txt → chips + 注入 → DeepSeek 正确回答文件内容 ✅；图片上传链路正常（报错仅为 DeepSeek 不支持视觉）。
+- 提交：9171a4af 及 9171a4af（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
