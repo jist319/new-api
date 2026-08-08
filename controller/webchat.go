@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 package controller
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -26,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -58,6 +60,9 @@ func WebChatLobeProxy(c *gin.Context) {
 			req.URL.Path = "/"
 		}
 		req.Host = target.Host
+		// Force uncompressed upstream responses so ModifyResponse can rewrite
+		// HTML/JS/CSS bodies; gin gzip re-compresses for the client afterwards.
+		req.Header.Set("Accept-Encoding", "identity")
 	}
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
@@ -80,12 +85,20 @@ func WebChatLobeProxy(c *gin.Context) {
 			}
 			_ = resp.Body.Close()
 			rewritten := rewriteWebChatUpstreamHosts(string(body), proxyBase)
-			rewritten = rewriteWebChatRootPaths(rewritten)
+			// Only rewrite root-absolute asset/API paths in HTML. Doing it in
+			// JS would corrupt regular expressions such as /'/
+			if strings.Contains(ct, "text/html") {
+				rewritten = rewriteWebChatRootPaths(rewritten)
+			}
 			resp.Body = io.NopCloser(strings.NewReader(rewritten))
 			resp.ContentLength = int64(len(rewritten))
 			resp.Header.Set("Content-Length", strconv.Itoa(len(rewritten)))
 		}
 		resp.Header.Set("Cache-Control", "no-store")
+		// Temporary diagnostics: find JS requests that come back as HTML.
+		if strings.Contains(resp.Request.URL.Path, ".js") && strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
+			common.SysLog(fmt.Sprintf("[webchat-diag] JS->HTML %s %s -> %d %s", resp.Request.Method, resp.Request.URL.Path, resp.StatusCode, resp.Header.Get("Content-Type")))
+		}
 		return nil
 	}
 
