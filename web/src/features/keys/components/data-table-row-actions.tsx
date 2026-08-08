@@ -28,7 +28,7 @@ import {
   Loader2,
   Settings2,
 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -51,6 +51,8 @@ import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
 import { resolveChatUrl, type ChatPreset } from '@/features/chat/lib/chat-links'
 import { getDownloadUrlForPreset, openExternalApp } from '@/features/chat/lib/external-launch'
 import { sendToFluent } from '@/features/chat/lib/send-to-fluent'
+import { useStatus } from '@/hooks/use-status'
+import { parseSidebarConfig } from '@/hooks/use-sidebar-config'
 import { encodeChannelConnectionInfo } from '@/lib/channel-connection-info'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
 
@@ -97,6 +99,14 @@ export function DataTableRowActions<TData>({
   const isRealKeyLoading = Boolean(loadingKeys[apiKey.id])
 
   const hasChatPresets = chatPresets.length > 0
+  const { status } = useStatus()
+  // 系统设置 → 侧边栏模块 → 令牌管理：「API 密钥操作菜单显示聊天入口」开关
+  const showActionsChat = useMemo(() => {
+    const cfg = parseSidebarConfig(
+      status?.SidebarModulesAdmin as string | null | undefined
+    )
+    return cfg.console?.actionsChat !== false
+  }, [status?.SidebarModulesAdmin])
   const toggleLabel = isEnabled ? t('Disable') : t('Enable')
 
   const handleMenuOpenChange = useCallback(
@@ -289,7 +299,7 @@ export function DataTableRowActions<TData>({
           </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {hasChatPresets && (
+        {hasChatPresets && showActionsChat && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>{t('Chat')}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>

@@ -201,7 +201,8 @@ export function SidebarModulesSection({
               description: t('Custom sidebar section'),
             }
             const modules = Object.entries(sectionConfig).filter(
-              ([moduleKey]) => moduleKey !== 'enabled'
+              ([moduleKey]) =>
+                moduleKey !== 'enabled' && moduleKey !== 'actionsChat'
             )
 
             return (
@@ -234,7 +235,8 @@ export function SidebarModulesSection({
                       title: toTitleCase(moduleKey),
                       description: t('Custom module'),
                     }
-                    return (
+
+                    const moduleSwitch = (
                       <FormField
                         key={`${sectionKey}.${moduleKey}`}
                         control={form.control}
@@ -262,6 +264,54 @@ export function SidebarModulesSection({
                         )}
                       />
                     )
+
+                    // 令牌管理：附带「API 密钥操作菜单显示聊天入口」子开关
+                    if (moduleKey === 'token' && sectionKey === 'console') {
+                      return (
+                        <div
+                          key={`${sectionKey}.token-group`}
+                          className='md:col-span-2 space-y-2'
+                        >
+                          {moduleSwitch}
+                          <FormField
+                            key={`${sectionKey}.actionsChat`}
+                            control={form.control}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            name={`${sectionKey}.actionsChat` as any}
+                            render={({ field }) => (
+                              <SettingsSwitchItem className='py-2'>
+                                <SettingsSwitchContent>
+                                  <FormLabel className='text-muted-foreground text-xs'>
+                                    {t('Show chat entry in API key actions')}
+                                  </FormLabel>
+                                  <FormDescription>
+                                    {t(
+                                      'Control whether the Chat menu appears in the API key row actions.'
+                                    )}
+                                  </FormDescription>
+                                </SettingsSwitchContent>
+                                <FormControl>
+                                  <Switch
+                                    checked={Boolean(field.value)}
+                                    onCheckedChange={field.onChange}
+                                    disabled={
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                      !form.watch(
+                                        `${sectionKey}.enabled` as any
+                                      ) ||
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                      !form.watch(`${sectionKey}.token` as any)
+                                    }
+                                  />
+                                </FormControl>
+                              </SettingsSwitchItem>
+                            )}
+                          />
+                        </div>
+                      )
+                    }
+
+                    return moduleSwitch
                   })}
                 </SettingsControlChildren>
               </SettingsControlGroup>

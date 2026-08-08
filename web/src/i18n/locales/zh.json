@@ -5253,6 +5253,8 @@
     "No enabled API keys found. Create or enable one first.": "未找到已启用的 API 密钥，请先创建或启用一个。",
     "Failed to load API key": "加载 API 密钥失败",
     "Third-party Chat": "第三方聊天",
-    "One-click Config": "一键配置"
+    "One-click Config": "一键配置",
+    "Show chat entry in API key actions": "API 密钥操作菜单显示聊天入口",
+    "Control whether the Chat menu appears in the API key row actions.": "控制 API 密钥操作列三点菜单中是否显示聊天入口。"
   }
 }

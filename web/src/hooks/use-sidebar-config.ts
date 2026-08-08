@@ -49,6 +49,7 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
     log: true,
     midjourney: true,
     task: true,
+    actionsChat: true,
   },
   personal: {
     enabled: true,
@@ -121,7 +122,7 @@ const URL_TO_CONFIG_MAP: Record<string, { section: string; module: string }> = {
 /**
  * Parse backend SidebarModulesAdmin configuration
  */
-function parseSidebarConfig(
+export function parseSidebarConfig(
   value: string | null | undefined
 ): SidebarModulesAdminConfig {
   // If empty string, null, or undefined, use default config
