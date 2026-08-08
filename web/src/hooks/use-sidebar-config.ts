@@ -44,8 +44,8 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
   },
   console: {
     enabled: true,
-    detail: true,
     token: true,
+    detail: true,
     log: true,
     midjourney: true,
     task: true,
