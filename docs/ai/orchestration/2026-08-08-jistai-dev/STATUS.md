@@ -157,6 +157,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：代理登录页及其 12 个资源全部 200；浏览器实测侧栏点 Lobe Chat → 同标签 /chat/4 内置页，iframe 指向 /webchat/lobe/...，控制台无 frame/refuse 错误（截图 .local-tests/lobe-embedded.png）。
 - 遗留：LobeHub 登录（Clerk）经代理后的会话 Cookie 可能受域名限制，页面加载与使用正常，登录持久化需实测；如需完全可靠登录可考虑后续调整或引导用户用 LobeChat 客户端。
 - 提交：7cd57c04（本地，未推送）。
+
+## Lobe Chat 内置修复（Chrome 实测通过，2026-08-09）
+
+- Chrome 实测发现两个代理缺陷并修复：① 浏览器带 gzip 时上游返回压缩体，HTML/JS 重写失效→资源请求根路径返回 HTML→SyntaxError；修复：代理强制上游 identity 编码，由 gin gzip 统一压缩。② 根路径重写误伤 JS 正则（/'/）→SyntaxError: Invalid regular expression flags；修复：根路径重写仅限 HTML，JS/CSS 只做域名替换。
+- Chrome 最终实测：同标签 /chat/4 内置页，控制台零页面错误，登录页全部资源 200（截图 .local-tests/lobe-embedded-chrome2.png）。
+- 提交：3ac7c6f2 及 63c7ba93（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
