@@ -41,6 +41,7 @@ export function buildResponsesPayload(
 
   return {
     model: config.model,
+    group: config.group,
     input,
     tools: [{ type: 'web_search_preview' }],
     web_search_options: { search_context_size: 'medium' },

@@ -159,6 +159,7 @@ export interface OpenAIResponsesInputItem {
 
 export interface OpenAIResponsesRequest {
   model: string
+  group?: string
   input: OpenAIResponsesInputItem[]
   tools?: { type: 'web_search_preview' }[]
   web_search_options?: { search_context_size?: string }
