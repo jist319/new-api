@@ -126,6 +126,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：use-sidebar-config.ts console 配置新增 ctionsChat（默认 true）并导出 parseSidebarConfig；sidebar-modules-section.tsx 令牌管理下渲染子开关（随令牌管理/控制台区域禁用联动）；data-table-row-actions.tsx 读取 console.actionsChat 控制「聊天」子菜单显隐；7 语言包新增 2 条文案。
 - 验证：typecheck/build ✅；系统设置页实测显示新开关；管理员接口保存 ctionsChat:false 后 status 生效、无前端运行时报错；自动化无法可靠打开 Radix 下拉（已知自动化限制），菜单显隐逻辑已按代码门控 + 配置验证。
 - 提交：96aa8368（本地，未推送）。
+
+## UI：令牌管理与聊天入口开关同排（2026-08-09）
+
+- 需求：把「API 密钥操作菜单显示聊天入口」开关与「令牌管理」放到同一行。
+- 改动：sidebar-modules-section.tsx 子开关改为 Fragment 平铺（不再占整行下方）；use-sidebar-config.ts console 配置把 token 提到首位，使网格第一行为「令牌管理 | 聊天入口开关」。
+- 验证：typecheck/build ✅；部署后浏览器实测两者 top 坐标一致（同排）。
+- 提交：f61eb5ea（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
