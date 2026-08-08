@@ -29,15 +29,46 @@ import {
   loadMessages,
   type MessageStateUpdater,
 } from '../lib'
+import {
+  deleteChatHistory,
+  loadChatHistory,
+  upsertChatHistory,
+} from '../lib/storage/history'
 import type {
   Message,
   PlaygroundConfig,
   ParameterEnabled,
   ModelOption,
   GroupOption,
+  ChatHistoryEntry,
 } from '../types'
 
 const MESSAGE_SAVE_DEBOUNCE_MS = 500
+const HISTORY_SAVE_DEBOUNCE_MS = 800
+const HISTORY_TITLE_MAX_LENGTH = 40
+
+function createHistoryId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function deriveHistoryTitle(messages: Message[]): string {
+  const firstUser = messages.find((message) => message.from === 'user')
+  const content = firstUser?.versions[0]?.content?.trim() ?? ''
+  const singleLine = content.replace(/\s+/g, ' ')
+  if (!singleLine) return ''
+  return singleLine.length > HISTORY_TITLE_MAX_LENGTH
+    ? `${singleLine.slice(0, HISTORY_TITLE_MAX_LENGTH)}…`
+    : singleLine
+}
+
+function hasPendingMessage(messages: Message[]): boolean {
+  return messages.some(
+    (message) => message.status === 'loading' || message.status === 'streaming'
+  )
+}
 
 /**
  * Main state management hook for playground
@@ -54,29 +85,77 @@ export function usePlaygroundState() {
 
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
+  const [history, setHistory] = useState<ChatHistoryEntry[]>(() =>
+    loadChatHistory()
+  )
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null)
+  const currentHistoryIdRef = useRef<string | null>(null)
   const messagesSaveTimerRef = useRef<number | null>(null)
+  const historySaveTimerRef = useRef<number | null>(null)
   const latestMessagesRef = useRef<Message[]>(messages)
+  const latestConfigRef = useRef<PlaygroundConfig>(config)
   const hasLoadedMessagesRef = useRef(false)
+  const historyRef = useRef<ChatHistoryEntry[]>(history)
 
   const [models, setModels] = useState<ModelOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
 
-  const persistMessages = useCallback((messagesToSave: Message[]) => {
-    latestMessagesRef.current = messagesToSave
-
-    if (!hasLoadedMessagesRef.current) {
+  const persistHistory = useCallback((messagesToSave: Message[]) => {
+    if (messagesToSave.length === 0 || hasPendingMessage(messagesToSave)) {
       return
     }
-
-    if (messagesSaveTimerRef.current !== null) {
-      window.clearTimeout(messagesSaveTimerRef.current)
+    const cfg = latestConfigRef.current
+    const now = Date.now()
+    let id = currentHistoryIdRef.current
+    if (!id) {
+      id = createHistoryId()
+      currentHistoryIdRef.current = id
+      setCurrentHistoryId(id)
     }
-
-    messagesSaveTimerRef.current = window.setTimeout(() => {
-      messagesSaveTimerRef.current = null
-      saveMessages(latestMessagesRef.current)
-    }, MESSAGE_SAVE_DEBOUNCE_MS)
+    const existing = historyRef.current.find((entry) => entry.id === id)
+    const title =
+      deriveHistoryTitle(messagesToSave) || existing?.title || 'New Chat'
+    const entry: ChatHistoryEntry = {
+      id,
+      title,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      model: cfg.model,
+      group: cfg.group,
+      messages: messagesToSave,
+    }
+    const next = upsertChatHistory(entry)
+    historyRef.current = next
+    setHistory(next)
   }, [])
+
+  const persistMessages = useCallback(
+    (messagesToSave: Message[]) => {
+      latestMessagesRef.current = messagesToSave
+
+      if (!hasLoadedMessagesRef.current) {
+        return
+      }
+
+      if (messagesSaveTimerRef.current !== null) {
+        window.clearTimeout(messagesSaveTimerRef.current)
+      }
+
+      messagesSaveTimerRef.current = window.setTimeout(() => {
+        messagesSaveTimerRef.current = null
+        saveMessages(latestMessagesRef.current)
+      }, MESSAGE_SAVE_DEBOUNCE_MS)
+
+      if (historySaveTimerRef.current !== null) {
+        window.clearTimeout(historySaveTimerRef.current)
+      }
+      historySaveTimerRef.current = window.setTimeout(() => {
+        historySaveTimerRef.current = null
+        persistHistory(latestMessagesRef.current)
+      }, HISTORY_SAVE_DEBOUNCE_MS)
+    },
+    [persistHistory]
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -104,8 +183,12 @@ export function usePlaygroundState() {
         window.clearTimeout(messagesSaveTimerRef.current)
         saveMessages(latestMessagesRef.current)
       }
+      if (historySaveTimerRef.current !== null) {
+        window.clearTimeout(historySaveTimerRef.current)
+        persistHistory(latestMessagesRef.current)
+      }
     },
-    []
+    [persistHistory]
   )
 
   // Update config with automatic save
@@ -113,6 +196,7 @@ export function usePlaygroundState() {
     <K extends keyof PlaygroundConfig>(key: K, value: PlaygroundConfig[K]) => {
       setConfig((prev) => {
         const updated = { ...prev, [key]: value }
+        latestConfigRef.current = updated
         saveConfig(updated)
         return updated
       })
@@ -157,6 +241,37 @@ export function usePlaygroundState() {
     saveParameterEnabled(DEFAULT_PARAMETER_ENABLED)
   }, [])
 
+  // Load a saved chat history entry into the current conversation
+  const loadHistoryEntry = useCallback(
+    (entry: ChatHistoryEntry) => {
+      updateMessages(entry.messages)
+      saveMessages(entry.messages)
+      currentHistoryIdRef.current = entry.id
+      setCurrentHistoryId(entry.id)
+      if (entry.model) updateConfig('model', entry.model)
+      if (entry.group) updateConfig('group', entry.group)
+    },
+    [updateMessages, updateConfig]
+  )
+
+  // Start a brand-new conversation (clears the editor and current history id)
+  const startNewConversation = useCallback(() => {
+    clearMessages()
+    currentHistoryIdRef.current = null
+    setCurrentHistoryId(null)
+  }, [clearMessages])
+
+  // Delete one history entry; detach it if it is the active conversation
+  const deleteHistoryEntry = useCallback((id: string) => {
+    const next = deleteChatHistory(id)
+    historyRef.current = next
+    setHistory(next)
+    if (currentHistoryIdRef.current === id) {
+      currentHistoryIdRef.current = null
+      setCurrentHistoryId(null)
+    }
+  }, [])
+
   return {
     // State
     config,
@@ -176,5 +291,12 @@ export function usePlaygroundState() {
     updateMessages,
     clearMessages,
     resetConfig,
+
+    // Chat history (local browser storage)
+    history,
+    currentHistoryId,
+    loadHistoryEntry,
+    startNewConversation,
+    deleteHistoryEntry,
   }
 }

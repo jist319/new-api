@@ -70,7 +70,11 @@ export const STORAGE_KEYS = {
   CONFIG: 'playground_config',
   MESSAGES: 'playground_messages',
   PARAMETER_ENABLED: 'playground_parameter_enabled',
+  CHAT_HISTORY: 'playground_chat_history',
 } as const
+
+// Maximum number of locally saved chat history entries
+export const MAX_CHAT_HISTORY_ENTRIES = 50 as const
 
 // Error messages
 export const ERROR_MESSAGES = {

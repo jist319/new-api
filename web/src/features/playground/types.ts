@@ -137,6 +137,17 @@ export interface ParameterEnabled {
   seed: boolean
 }
 
+// Chat history entry (saved locally in the browser)
+export interface ChatHistoryEntry {
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  model?: string
+  group?: string
+  messages: Message[]
+}
+
 // Model and group options
 export interface ModelOption {
   label: string

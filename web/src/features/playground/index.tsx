@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { PlaygroundChat } from './components/chat/playground-chat'
+import { PlaygroundHistoryPanel } from './components/history/playground-history'
 import { PlaygroundInput } from './components/input/playground-input'
 import {
   useChatHandler,
@@ -39,6 +40,11 @@ export function Playground() {
     updateConfig,
     updateParameterEnabled,
     clearMessages,
+    history,
+    currentHistoryId,
+    loadHistoryEntry,
+    startNewConversation,
+    deleteHistoryEntry,
   } = usePlaygroundState()
 
   const { sendChat, stopGeneration, isGenerating } = useChatHandler({
@@ -75,10 +81,20 @@ export function Playground() {
   })
 
   return (
-    <div className='relative flex size-full min-h-0 flex-col overflow-hidden'>
-      {/* Full-width scroll container: scrolling works even over side whitespace */}
+    <div className='relative flex size-full min-h-0 overflow-hidden'>
+      <PlaygroundHistoryPanel
+        history={history}
+        currentId={currentHistoryId}
+        onSelect={loadHistoryEntry}
+        onNew={startNewConversation}
+        onDelete={deleteHistoryEntry}
+      />
+
+      {/* Main column: chat + input */}
       <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-        <PlaygroundChat
+        {/* Full-width scroll container: scrolling works even over side whitespace */}
+        <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+          <PlaygroundChat
           messages={messages}
           isLoadingMessages={isLoadingMessages}
           onRegenerateMessage={handleRegenerateMessage}
@@ -90,12 +106,12 @@ export function Playground() {
           onCancelEdit={handleEditOpenChange}
           onSaveEdit={(newContent) => applyEdit(newContent, false)}
           onSaveEditAndSubmit={(newContent) => applyEdit(newContent, true)}
-        />
-      </div>
+          />
+        </div>
 
-      {/* Input area: center content and constrain to the same container width */}
-      <div className='mx-auto w-full max-w-4xl'>
-        <PlaygroundInput
+        {/* Input area: center content and constrain to the same container width */}
+        <div className='mx-auto w-full max-w-4xl'>
+          <PlaygroundInput
           config={config}
           disabled={isGenerating}
           groups={groups}
@@ -112,8 +128,9 @@ export function Playground() {
           onStop={stopGeneration}
           onSubmit={handleSendMessage}
           parameterEnabled={parameterEnabled}
-          hasMessages={messages.length > 0}
-        />
+            hasMessages={messages.length > 0}
+          />
+        </div>
       </div>
     </div>
   )
