@@ -27,6 +27,7 @@ import {
   Link,
   Loader2,
   Settings2,
+  ChevronDown,
 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,12 +36,15 @@ import { toast } from 'sonner'
 import { DataTableRowActionMenu } from '@/components/data-table/core/row-action-menu'
 import { Button } from '@/components/ui/button'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuShortcut,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
   Tooltip,
@@ -133,6 +137,27 @@ export function DataTableRowActions<TData>({
     setOpen('cc-switch')
   }, [apiKey.id, resolveRealKey, setResolvedKey, setCurrentRow, setOpen])
 
+  const handleOpenCherryStudio = useCallback(async () => {
+    const realKey = await resolveRealKey(apiKey.id)
+    if (!realKey) return
+    const preset: ChatPreset = {
+      id: 'cherry-studio',
+      name: 'Cherry Studio',
+      url: 'cherrystudio://providers/api-keys?v=1&data={cherryConfig}',
+      type: 'custom-protocol',
+    }
+    const url = resolveChatUrl({
+      template: preset.url,
+      apiKey: realKey,
+      serverAddress,
+    })
+    if (!url) {
+      toast.error(t('Invalid chat link. Please contact the administrator.'))
+      return
+    }
+    await openExternalApp(preset, url)
+  }, [apiKey.id, resolveRealKey, serverAddress, t])
+
   const handleOpenChatPreset = useCallback(
     async (preset: ChatPreset) => {
       const realKey = await resolveRealKey(apiKey.id)
@@ -165,11 +190,8 @@ export function DataTableRowActions<TData>({
       if (preset.type === 'custom-protocol') {
         await openExternalApp(preset, resolvedUrl)
       } else {
-        try {
-          window.open(resolvedUrl, '_blank', 'noopener')
-        } catch {
-          window.location.href = resolvedUrl
-        }
+        // web 类预设（Lobe Chat / AI as Workspace）在当前标签页直接打开，不新开窗口
+        window.location.href = resolvedUrl
       }
     },
     [resolveRealKey, apiKey.id, serverAddress, t]
@@ -252,15 +274,31 @@ export function DataTableRowActions<TData>({
         <TooltipContent>{t('Edit')}</TooltipContent>
       </Tooltip>
 
-      <Button
-        variant='ghost'
-        size='sm'
-        onClick={handleOpenCCSwitch}
-        className='gap-1.5 px-2 text-muted-foreground hover:text-foreground'
-      >
-        <Settings2 className='size-4' />
-        <span>{t('One-click Config')}</span>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant='ghost'
+              size='sm'
+              className='gap-1.5 px-2 text-muted-foreground hover:text-foreground'
+            >
+              <Settings2 className='size-4' />
+              <span>{t('One-click Config')}</span>
+              <ChevronDown className='size-3.5 opacity-70' />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align='end' className='w-48'>
+          <DropdownMenuItem onClick={handleOpenCCSwitch}>
+            <ArrowRightLeft className='mr-2 size-4' />
+            {t('CC Switch')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleOpenCherryStudio}>
+            <ExternalLink className='mr-2 size-4' />
+            {t('Cherry Studio')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <DataTableRowActionMenu
         ariaLabel={t('Open menu')}
