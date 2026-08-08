@@ -230,6 +230,15 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 诊断：zzone 本身是 new-api 网关；/v1/models 实测支持 gpt-5.4/gpt-5.5/gpt-5.6-sol/gpt-5.6-terra/codex-auto-review（gpt-4o-mini 等不可用，已更新渠道模型与 abilities）。
 - 结果：连接/鉴权/模型路由全部正常；真实调用返回 **403 Insufficient account balance（zzone 账户余额不足）**，充值后可复用。
 - 临时调试代码（distributor/channel_cache/channel_select）已全部还原；key 仅存本地 DB（打码记录）。
+
+## 修复：联网（Web Search）在 GPT 模型下可用（2026-08-09）
+
+- 现象：聊天开启联网用 GPT 无效。
+- 根因：① chat/completions 的 web_search_options 只写入 context 无人消费，OpenAI 联网需 Responses API + web_search_preview；② 会话用户分组为空时 /pg 分发找不到渠道。
+- 修复：联网时前端改走 /pg/responses（新增会话路由，镜像 /pg/chat/completions）并携带 tools:[web_search_preview] + web_search_options；后端 Distribute 对 /pg/responses 读取请求体 group（镜像 chat 逻辑）；响应解析 output_text。
+- 验证：API 实测 gpt-5.4 → 200，web_search_preview 调用 3 次并计费（logs id=217，quota 53748）；Chrome UI 实测 gpt-5.5 开启联网回答真实新闻并带来源（响应 55.81s，截图 .local-tests/websearch-gpt.png）。
+- 注意：联网依赖渠道/模型支持（GPT-5.x 等）；DeepSeek 渠道不支持会报错；搜索+推理响应较慢属正常。
+- 提交：74f220f6 及 676a52e0/1ec2564f/fef1c269/74f220f6（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
