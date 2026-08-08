@@ -148,6 +148,15 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：chat-presets-item.tsx 移除 web 预设的 /chat/<id> 链接分支，统一改为按钮触发 handleOpenExternal（先取启用密钥 → esolveChatUrl → window.open 新标签直开）；web 类型不再提前 return。AI as Workspace 同步受益。
 - 验证：typecheck/build ✅；部署后浏览器实测点 Lobe Chat → 新标签打开 chat-preview.lobehub.com/?settings=...（含 apiKey/address）。
 - 提交：34e97134（本地，未推送）。
+
+## Lobe Chat / AI as Workspace 内置使用（同源代理，2026-08-09）
+
+- 需求：Lobe Chat 和 AI as Workspace 在内置页面直接使用，不开新窗口。
+- 事实：AI as Workspace（aiaw.app）允许被 iframe 嵌入 → 恢复 web 预设走内置 /chat/<id>（iframe）；LobeChat 官方（chat-preview 不可达；app.lobehub.com 返回 X-Frame-Options: DENY / frame-ancestors 'none'）无法跨域内嵌。
+- 方案：新增后端同源代理 GET/POST /webchat/lobe/* → https://app.lobehub.com/*（controller/webchat.go，仅限单一上游防开放代理）：剥离 X-Frame-Options/CSP、重写 Location、HTML/JS/CSS 中根路径与 lobehub 绝对地址全部重写为 /webchat/lobe；前端 chat-links.ts 支持 {origin}（不编码）令牌并把 /、{origin} 开头识别为 web；setting/chat.go 默认 Lobe 预设改为 {origin}/webchat/lobe/?settings=...；DB Chats 选项已同步更新；chat-presets-item.tsx 恢复 web→/chat/<id> 内嵌。
+- 验证：代理登录页及其 12 个资源全部 200；浏览器实测侧栏点 Lobe Chat → 同标签 /chat/4 内置页，iframe 指向 /webchat/lobe/...，控制台无 frame/refuse 错误（截图 .local-tests/lobe-embedded.png）。
+- 遗留：LobeHub 登录（Clerk）经代理后的会话 Cookie 可能受域名限制，页面加载与使用正常，登录持久化需实测；如需完全可靠登录可考虑后续调整或引导用户用 LobeChat 客户端。
+- 提交：7cd57c04（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
