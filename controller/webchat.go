@@ -33,6 +33,8 @@ import (
 // reach. Keep it explicit to avoid turning the endpoint into an open proxy.
 const webChatLobeTarget = "https://app.lobehub.com"
 
+const webChatLobeHost = "app.lobehub.com"
+
 // WebChatLobeProxy serves LobeChat Web under our own origin so it can be
 // embedded in the built-in chat page. LobeHub itself sends
 // `X-Frame-Options: DENY` / `frame-ancestors 'none'`, which browsers enforce
@@ -46,6 +48,7 @@ func WebChatLobeProxy(c *gin.Context) {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxyBase := "http://" + c.Request.Host + "/webchat/lobe"
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
@@ -67,18 +70,20 @@ func WebChatLobeProxy(c *gin.Context) {
 				resp.Header.Set("Location", "/webchat/lobe"+loc)
 			}
 		}
-		// Rewrite root-absolute asset/API references in HTML so the proxied
-		// app stays same-origin (cookies, auth and framing all work).
-		if ct := resp.Header.Get("Content-Type"); strings.Contains(ct, "text/html") {
+		// Rewrite absolute references to the upstream host so the proxied app
+		// stays same-origin (assets, canonical redirects and auth all work).
+		if ct := resp.Header.Get("Content-Type"); strings.Contains(ct, "text/html") ||
+			strings.Contains(ct, "javascript") || strings.Contains(ct, "text/css") {
 			body, readErr := io.ReadAll(resp.Body)
 			if readErr != nil {
 				return readErr
 			}
 			_ = resp.Body.Close()
-			html := rewriteWebChatRootPaths(string(body))
-			resp.Body = io.NopCloser(strings.NewReader(html))
-			resp.ContentLength = int64(len(html))
-			resp.Header.Set("Content-Length", strconv.Itoa(len(html)))
+			rewritten := rewriteWebChatUpstreamHosts(string(body), proxyBase)
+			rewritten = rewriteWebChatRootPaths(rewritten)
+			resp.Body = io.NopCloser(strings.NewReader(rewritten))
+			resp.ContentLength = int64(len(rewritten))
+			resp.Header.Set("Content-Length", strconv.Itoa(len(rewritten)))
 		}
 		resp.Header.Set("Cache-Control", "no-store")
 		return nil
@@ -90,6 +95,16 @@ func WebChatLobeProxy(c *gin.Context) {
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
+}
+
+// rewriteWebChatUpstreamHosts replaces absolute references to the upstream
+// host with our same-origin proxy mount, keeping canonical redirects and
+// API calls inside the iframe.
+func rewriteWebChatUpstreamHosts(content, proxyBase string) string {
+	content = strings.ReplaceAll(content, "https://"+webChatLobeHost, proxyBase)
+	content = strings.ReplaceAll(content, "http://"+webChatLobeHost, proxyBase)
+	content = strings.ReplaceAll(content, "//"+webChatLobeHost, proxyBase)
+	return content
 }
 
 // rewriteWebChatRootPaths prefixes root-absolute references with the
