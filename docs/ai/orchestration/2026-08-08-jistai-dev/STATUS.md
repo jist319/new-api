@@ -163,6 +163,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - Chrome 实测发现两个代理缺陷并修复：① 浏览器带 gzip 时上游返回压缩体，HTML/JS 重写失效→资源请求根路径返回 HTML→SyntaxError；修复：代理强制上游 identity 编码，由 gin gzip 统一压缩。② 根路径重写误伤 JS 正则（/'/）→SyntaxError: Invalid regular expression flags；修复：根路径重写仅限 HTML，JS/CSS 只做域名替换。
 - Chrome 最终实测：同标签 /chat/4 内置页，控制台零页面错误，登录页全部资源 200（截图 .local-tests/lobe-embedded-chrome2.png）。
 - 提交：3ac7c6f2 及 63c7ba93（本地，未推送）。
+
+## Lobe Chat 内置「Something went wrong」修复（上游抖动 502，2026-08-09）
+
+- Chrome 复现：内置页出现 Something went wrong。定位：代理日志大量 502（webchat proxy error）——app.lobehub.com 从本机网络间歇性连不上（与 GitHub/DockerHub 抖动同源），静态资源时好时坏导致 SPA 加载不全。
+- 修复：controller/webchat.go 增加 retryTransport——对无请求体的幂等 GET 请求在上游瞬时失败/5xx 时自动重试 3 次（400ms 递增退避），POST 不重放。
+- 验证：部署后 Chrome 实测控制台零页面错误；近 3 分钟代理请求 56 个 200、0 个 502（截图 .local-tests/lobe-embedded-chrome3.png）。
+- 遗留：上游网络仍可能偶发慢/失败（重试已显著缓解）；LobeHub 登录（Clerk）会话持久化经代理仍受域名限制。
+- 提交：b773ca87（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
