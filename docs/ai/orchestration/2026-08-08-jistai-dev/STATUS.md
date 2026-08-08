@@ -119,6 +119,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：sidebar-modules-section.tsx 与 sidebar-modules-card.tsx 中 playground 模块 title 改 t('Chat')（聊天）、chat 模块 title 改 t('Third-party Chat')（第三方聊天）。
 - 验证：typecheck/build ✅；部署后浏览器实测系统设置侧边栏模块显示「聊天 / 第三方聊天」。
 - 提交：efd38f1c（本地，未推送）。
+
+## 功能：令牌管理新增「API 密钥操作显示聊天入口」开关（2026-08-09）
+
+- 需求：系统设置 → 侧边栏模块 → 控制台区域 → 令牌管理 下增加开关，控制 API 密钥操作列三点菜单里的「聊天」（第三方聊天预设）入口显隐。
+- 改动：use-sidebar-config.ts console 配置新增 ctionsChat（默认 true）并导出 parseSidebarConfig；sidebar-modules-section.tsx 令牌管理下渲染子开关（随令牌管理/控制台区域禁用联动）；data-table-row-actions.tsx 读取 console.actionsChat 控制「聊天」子菜单显隐；7 语言包新增 2 条文案。
+- 验证：typecheck/build ✅；系统设置页实测显示新开关；管理员接口保存 ctionsChat:false 后 status 生效、无前端运行时报错；自动化无法可靠打开 Radix 下拉（已知自动化限制），菜单显隐逻辑已按代码门控 + 配置验证。
+- 提交：96aa8368（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
