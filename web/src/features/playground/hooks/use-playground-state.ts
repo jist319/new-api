@@ -170,6 +170,22 @@ export function usePlaygroundState() {
       hasLoadedMessagesRef.current = true
       setMessages(loadedMessages)
       setIsLoadingMessages(false)
+
+      // Reuse an existing history entry when the restored conversation matches
+      // one of the locally saved entries, so reloading the page does not
+      // create a duplicate history item.
+      if (loadedMessages.length > 0) {
+        const title = deriveHistoryTitle(loadedMessages)
+        const match = historyRef.current.find(
+          (entry) =>
+            entry.title === title &&
+            entry.messages.length === loadedMessages.length
+        )
+        if (match) {
+          currentHistoryIdRef.current = match.id
+          setCurrentHistoryId(match.id)
+        }
+      }
     }, 0)
 
     return () => {
