@@ -105,6 +105,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：use-sidebar-data.ts 聊天项 icon MessageSquare、第三方聊天项 icon FlaskConical。
 - 验证：typecheck/build ✅；部署后浏览器 DOM 确认 lucide-message-square / lucide-flask-conical。
 - 提交：5f6452dd（本地，未推送）。
+
+## UI：API 密钥操作列新增「一键配置」（2026-08-08）
+
+- 需求：操作列加「一键配置」；三点菜单里的 CC Switch 导入移入其中。
+- 改动：data-table-row-actions.tsx 操作列新增「一键配置」按钮（Settings2 图标 + t('One-click Config')），点击打开 CC Switch 导入弹窗（resolveRealKey → setOpen('cc-switch')）；三点菜单移除 CC Switch 项（保留 复制密钥/复制连接信息/聊天/删除）；7 个语言包新增「One-click Config」key（zh=一键配置）。
+- 验证：typecheck/build ✅；部署后浏览器实测：操作列显示「一键配置」按钮，点击弹出「填入 CC Switch」弹窗（应用 Claude/Codex/Gemini、名称、主模型等）。
+- 提交：71d6c378（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
