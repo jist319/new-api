@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,51 @@ import (
 const webChatLobeTarget = "https://app.lobehub.com"
 
 const webChatLobeHost = "app.lobehub.com"
+
+// retryTransport retries idempotent (body-less) requests on transient
+// upstream failures. The upstream host is frequently unreachable from this
+// network for a second or two, which otherwise surfaces as random 502s and a
+// half-loaded embedded app.
+type retryTransport struct {
+	base http.RoundTripper
+	max  int
+}
+
+func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if t.base == nil {
+		t.base = http.DefaultTransport
+	}
+	// Only retry body-less (idempotent) requests; replaying a consumed body
+	// would corrupt POST payloads.
+	if req.Body != nil {
+		return t.base.RoundTrip(req)
+	}
+	attempts := t.max
+	if attempts < 1 {
+		attempts = 1
+	}
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			time.Sleep(time.Duration(i) * 400 * time.Millisecond)
+		}
+		resp, err := t.base.RoundTrip(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if resp.StatusCode >= 500 {
+			_ = resp.Body.Close()
+			lastErr = io.EOF
+			continue
+		}
+		return resp, nil
+	}
+	if lastErr == nil {
+		lastErr = io.EOF
+	}
+	return nil, lastErr
+}
 
 // WebChatLobeProxy serves LobeChat Web under our own origin so it can be
 // embedded in the built-in chat page. LobeHub itself sends
@@ -48,6 +94,7 @@ func WebChatLobeProxy(c *gin.Context) {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.Transport = &retryTransport{max: 3}
 	proxyBase := "http://" + c.Request.Host + "/webchat/lobe"
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
