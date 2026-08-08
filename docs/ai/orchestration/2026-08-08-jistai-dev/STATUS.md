@@ -171,6 +171,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：部署后 Chrome 实测控制台零页面错误；近 3 分钟代理请求 56 个 200、0 个 502（截图 .local-tests/lobe-embedded-chrome3.png）。
 - 遗留：上游网络仍可能偶发慢/失败（重试已显著缓解）；LobeHub 登录（Clerk）会话持久化经代理仍受域名限制。
 - 提交：b773ca87（本地，未推送）。
+
+## 功能：一键配置改为下拉列表（CC Switch + Cherry Studio，2026-08-09）
+
+- 需求：API 密钥操作列「一键配置」改为多选列表；含 CC Switch，并新增 Cherry Studio 一键配置。
+- 改动：data-table-row-actions.tsx 一键配置按钮改为 DropdownMenu（CC Switch / Cherry Studio）；CC Switch 走现有「填入 CC Switch」弹窗（Claude/Codex/Gemini + 模型）；Cherry Studio 走 cherrystudio://providers/api-keys?v=1&data={cherryConfig} 深链一键导入（resolveChatUrl 生成 base64 配置），未安装时弹「请先安装此应用」并跳 cherryai.com.cn/download。
+- 验证：浏览器实测下拉显示两项；CC Switch 点击弹出导入弹窗；Cherry Studio 点击（协议被拦截场景）自动跳官方下载页。
+- 提交：52362c56 及 52362c56（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
