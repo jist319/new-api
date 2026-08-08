@@ -46,7 +46,14 @@ type PlaygroundInputToolsProps = {
   config: PlaygroundConfig
   disabled?: boolean
   hasMessages?: boolean
-  onAddAttachments: (items: { name: string; dataUrl: string }[]) => void
+  onAddAttachments: (
+    items: {
+      name: string
+      dataUrl?: string
+      text?: string
+      kind: 'image' | 'text'
+    }[]
+  ) => void
   onClearMessages?: () => void
   onConfigChange: <K extends keyof PlaygroundConfig>(
     key: K,
@@ -77,26 +84,75 @@ export function PlaygroundInputTools({
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const readFilesAsDataUrls = (files: FileList | null) => {
+  const TEXT_FILE_TYPES = new Set([
+    'text/plain',
+    'text/markdown',
+    'text/csv',
+    'text/html',
+    'text/css',
+    'text/xml',
+    'application/json',
+    'application/x-yaml',
+    'application/javascript',
+    'application/typescript',
+    'application/x-sh',
+  ])
+
+  const isImageFile = (file: File) => file.type.startsWith('image/')
+
+  const isTextFile = (file: File) =>
+    TEXT_FILE_TYPES.has(file.type) ||
+    /\\.(txt|md|markdown|csv|tsv|log|json|py|js|mjs|cjs|ts|tsx|jsx|go|java|c|cpp|h|hpp|cs|rb|php|rs|swift|kt|kts|sql|sh|bash|ps1|html|htm|css|scss|xml|yaml|yml|toml|ini)$/i.test(
+      file.name
+    )
+
+  const readFilesAsAttachments = (files: FileList | null) => {
     if (!files || files.length === 0) return
-    const items: { name: string; dataUrl: string }[] = []
+    const items: {
+      name: string
+      dataUrl?: string
+      text?: string
+      kind: 'image' | 'text'
+    }[] = []
     let pending = files.length
-    for (const file of Array.from(files)) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          items.push({ name: file.name, dataUrl: reader.result })
-        }
-        pending -= 1
-        if (pending === 0 && items.length > 0) {
+    const finish = () => {
+      pending -= 1
+      if (pending === 0) {
+        if (items.length > 0) {
           onAddAttachments(items)
           toast.success(t('Attachments added'))
         }
       }
-      reader.onerror = () => {
-        pending -= 1
+    }
+    for (const file of Array.from(files)) {
+      if (isImageFile(file)) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            items.push({ name: file.name, dataUrl: reader.result, kind: 'image' })
+          }
+          finish()
+        }
+        reader.onerror = () => finish()
+        reader.readAsDataURL(file)
+      } else if (isTextFile(file)) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            items.push({
+              name: file.name,
+              text: reader.result.slice(0, 20000),
+              kind: 'text',
+            })
+          }
+          finish()
+        }
+        reader.onerror = () => finish()
+        reader.readAsText(file)
+      } else {
+        toast.error(t('Unsupported file type'))
+        finish()
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -117,7 +173,7 @@ export function PlaygroundInputTools({
       if (context) {
         context.drawImage(video, 0, 0)
         const dataUrl = canvas.toDataURL('image/png')
-        onAddAttachments([{ name, dataUrl }])
+        onAddAttachments([{ name, dataUrl, kind: 'image' }])
         toast.success(t('Attachments added'))
       }
     } finally {
@@ -275,11 +331,11 @@ export function PlaygroundInputTools({
       <input
         ref={fileInputRef}
         type='file'
-        accept='image/*'
+        accept='image/*,.txt,.md,.markdown,.csv,.tsv,.log,.json,.py,.js,.mjs,.cjs,.ts,.tsx,.jsx,.go,.java,.c,.cpp,.h,.hpp,.cs,.rb,.php,.rs,.swift,.kt,.kts,.sql,.sh,.bash,.ps1,.html,.htm,.css,.scss,.xml,.yaml,.yml,.toml,.ini'
         multiple
         className='hidden'
         onChange={(event) => {
-          readFilesAsDataUrls(event.target.files)
+          readFilesAsAttachments(event.target.files)
           event.target.value = ''
         }}
       />

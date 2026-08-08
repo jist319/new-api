@@ -5268,6 +5268,7 @@
     "Photo": "照片",
     "Screenshot capture cancelled or failed": "截屏已取消或失败",
     "Camera access cancelled or failed": "相机访问已取消或失败",
-    "Web search enabled": "已开启联网"
+    "Web search enabled": "已开启联网",
+    "Unsupported file type": "暂不支持该文件类型"
   }
 }

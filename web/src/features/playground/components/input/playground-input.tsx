@@ -85,7 +85,13 @@ export function PlaygroundInput({
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [attachments, setAttachments] = useState<
-    { id: string; name: string; dataUrl: string }[]
+    {
+      id: string
+      name: string
+      dataUrl?: string
+      text?: string
+      kind: 'image' | 'text'
+    }[]
   >([])
   const [webSearch, setWebSearch] = useState(false)
 
@@ -93,22 +99,40 @@ export function PlaygroundInput({
     const submittableText = getSubmittableInputText(message, disabled)
 
     if (!submittableText) return
+    const textAttachments = attachments
+      .filter((attachment) => attachment.kind === 'text' && attachment.text)
+      .map(
+        (attachment) =>
+          `\n\n【附件：${attachment.name}】\n${attachment.text}`
+      )
+      .join('')
     onSubmit(
-      submittableText,
-      attachments.map((attachment) => attachment.dataUrl),
+      submittableText + textAttachments,
+      attachments
+        .filter((attachment) => attachment.kind === 'image' && attachment.dataUrl)
+        .map((attachment) => attachment.dataUrl as string),
       webSearch
     )
     setText('')
     setAttachments([])
   }
 
-  const addAttachments = (items: { name: string; dataUrl: string }[]) => {
+  const addAttachments = (
+    items: {
+      name: string
+      dataUrl?: string
+      text?: string
+      kind: 'image' | 'text'
+    }[]
+  ) => {
     setAttachments((prev) => [
       ...prev,
       ...items.map((item, index) => ({
         id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
         name: item.name,
         dataUrl: item.dataUrl,
+        text: item.text,
+        kind: item.kind,
       })),
     ])
   }
@@ -131,11 +155,17 @@ export function PlaygroundInput({
                 key={attachment.id}
                 className='border-border/60 bg-background relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-md border'
               >
-                <img
-                  src={attachment.dataUrl}
-                  alt={attachment.name}
-                  className='size-full object-cover'
-                />
+                {attachment.kind === 'image' ? (
+                  <img
+                    src={attachment.dataUrl}
+                    alt={attachment.name}
+                    className='size-full object-cover'
+                  />
+                ) : (
+                  <span className='text-muted-foreground max-w-20 truncate px-1 text-[10px]'>
+                    {attachment.name}
+                  </span>
+                )}
                 <button
                   type='button'
                   aria-label={t('Delete')}

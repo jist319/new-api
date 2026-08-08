@@ -5268,6 +5268,7 @@
     "Photo": "Photo",
     "Screenshot capture cancelled or failed": "Screenshot capture cancelled or failed",
     "Camera access cancelled or failed": "Camera access cancelled or failed",
-    "Web search enabled": "Web search enabled"
+    "Web search enabled": "Web search enabled",
+    "Unsupported file type": "Unsupported file type"
   }
 }

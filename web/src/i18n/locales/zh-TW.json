@@ -5268,6 +5268,7 @@
     "Photo": "照片",
     "Screenshot capture cancelled or failed": "截圖已取消或失敗",
     "Camera access cancelled or failed": "相機存取已取消或失敗",
-    "Web search enabled": "已開啟聯網"
+    "Web search enabled": "已開啟聯網",
+    "Unsupported file type": "暫不支援該檔案類型"
   }
 }
