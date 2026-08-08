@@ -207,6 +207,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 实现：playground-history.tsx 面板改为常驻并动态切换宽度（w-60 ↔ w-0，overflow-hidden，	ransition-[width] duration-300）；折叠时面板宽度 0，左上角浮动「展开历史」按钮（nimate-in fade-in-0 slide-in-from-left-2）。
 - 验证：typecheck/build ✅；浏览器实测 240→0（无窄条、展开按钮出现）→240。
 - 提交：e3c70722（本地，未推送）。
+
+## 功能：聊天附件/联网/参数总开关（2026-08-09）
+
+- 附件：附件菜单实现 上传文件/上传照片（图片选择器→dataURL）、截屏（getDisplayMedia 抓帧）、拍照（getUserMedia 抓帧）；消息 Message 增加 imageUrls，发送时经 formatMessageForAPI 转 ContentPart[image_url]，输入框上方显示缩略图+删除。
+- 联网：搜索按钮改为开关（激活高亮），开启时请求携带 web_search_options（search_context_size=medium），是否真正联网取决于渠道/上游支持。
+- 参数总开关：ParameterEnabled 增加 master（默认 false，storage schema 同步）；参数面板顶部「参数总开关」默认关闭，关闭时所有参数不随请求发送、控件禁用。
+- 验证：typecheck/build ✅；浏览器实测附件菜单四项、联网开关激活、总开关默认关且参数禁用；zh 文案 附件/截屏 对齐。
+- 提交：b7c567f2 及 d472d29（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
