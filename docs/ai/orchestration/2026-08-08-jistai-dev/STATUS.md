@@ -67,6 +67,14 @@
 - 修复：仅在本地开发 compose（docker-compose.dev.yml）加 CRITICAL_RATE_LIMIT=10000，生产 compose 不动；容器重建后 env 生效。
 - 验证：浏览器连续 5 次打开令牌菜单无 429 弹窗；后端日志无 429 状态码。
 - 提交：0ef72ced（本地，未推送）。
+
+## 修复：未安装提示中文化 + Chrome 弹窗拦截问题（2026-08-08）
+
+- 现象：① 弹窗提示在 Chrome 下显示英文；② Chrome 里点击预设后「连接加载不出来、提示无标题」，内置浏览器正常。
+- 根因：回退下载页此前用 \window.open\，但它在 1.8s 异步检测之后调用，已失去用户手势，被 Chrome 弹窗拦截；协议链接自身在 Chrome 打开的是「无标题」错误标签页。
+- 修复：提示硬编码为中文「请先安装此应用」（不随浏览器语言）；下载页改为 \window.location.href\ **当前标签直接跳转**（不受弹窗拦截影响），并在跳转前关闭协议占位标签。
+- 验证：应用内浏览器实测 CC Switch → 当前标签跳转 ccswitch.io/zh/ 成功；typecheck/build ✅。真实 Chrome 行为待用户复测。
+- 提交：5af09ce9（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
