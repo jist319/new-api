@@ -305,7 +305,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 需求：主页「前往仪表盘 / Get Started」右侧的「文档」按钮也要改。
 - 改动：`hero.tsx` 不再读取 `docs_link`（去掉 `https://docs.newapi.pro` 兜底），改读 `tutorial_doc`：空 → 按钮隐藏；http(s) URL → 外链新标签；其它 → 内置 `/tutorial`；文案 `Tutorial Docs`（7 语言 key 已存在）。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status.tutorial_doc` 持久化（重启后内容保留，此前一次 `"1"` 为测试临时态，非功能问题）；当前 DB 留有 61 字符 Markdown 演示。
-- 提交：见下（本地，未推送）。
+- 提交：3867d1b8（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
