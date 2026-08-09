@@ -298,7 +298,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：`go build ./...` ✅、`go vet` ✅；`bun run typecheck` ✅、`bun run build` ✅（routeTree 重新生成含 `/tutorial`）；镜像 `new-api-dev:local` 重建 + 容器重启。
 - API 实测：`/api/status.tutorial_doc` 初始空 → PUT 保存 Markdown（中文 roundtrip ok）→ status/`/api/tutorial-doc` 一致；URL 模式 → 返回完整 URL；清空 → `""`（禁用）；`/api/option/` 含 `TutorialDoc`；`/tutorial` 200；dist bundle 含「教程文档 / Tutorial Docs / /tutorial」。
 - 备注：本地 DB 当前留有 Markdown 示例（顶栏会显示「教程文档」，点开可看效果）；正式使用请在 系统设置→站点与品牌→系统信息 编辑，或清空禁用。lint 仍为上游存量错误（D008），本次新文件无新增。
-- 提交：见下（本地，未推送）。
+- 提交：760984be（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
