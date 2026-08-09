@@ -334,6 +334,14 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
 - 推送结果：`51185fc0..2db6306a  dev -> dev`（2 个提交：手机端历史面板修复 + STATUS 哈希记录）。
 - 本账本更新后另行提交并推送。
+
+## 修复：手机端历史抽屉透明/无动画/占比太小（2026-08-10）
+
+- 现象：手机端「历史」①页面呈透明黑色；②打开/关闭无过渡动画；③面板只占屏幕约 1/3。
+- 根因：抽屉背景用 `bg-muted/20`（20% 透明度），黑色遮罩透出来 → 看着像透明黑；面板用条件渲染切换 `hidden/flex`，无过渡；宽度固定 `w-60`(240px) 在手机上偏小。
+- 修复：①背景改为不透明 `bg-background`（桌面仍 `md:bg-muted/20`）；②面板改为常驻 + `translate-x` 滑动（`-translate-x-full ↔ translate-x-0`，`transition-[width,transform] duration-300`），遮罩加 `animate-in fade-in-0`；③宽度改 `w-[85%] max-w-80`（约占屏 85%，上限 320px）。
+- 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
