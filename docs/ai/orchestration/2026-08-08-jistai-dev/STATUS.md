@@ -269,6 +269,15 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
 - 推送结果：`77b874a7..ba188fc6  dev -> dev`（共 25 个提交，含历史面板/折叠动画/附件联网参数/兑换码/favicon 修复等全部二开内容）。
 - 本账本更新后另行提交并推送（见下）。
+
+## 同步：main 镜像上游 + dev 合并（2026-08-09）
+
+- 现象：GitHub 提示 fork 的 main 落后 QuantumNous/new-api:main 2 个提交。
+- 上游更新（均未触碰二开文件）：`2399de97` fix(ali): stop injecting top_p（`relay/channel/ali/text.go` + 新增 `text_test.go`）；`823e2630` fix(channels): Qwen TTS 模型分类（`web/src/features/channels/lib/model-categories.ts`）。
+- main：`git merge upstream/main --ff-only`（`5c3abff → 823e2630`）→ `git push origin main` ✅（不 force push）。
+- dev：`git merge main` 无冲突（ort 自动合并 3 文件）。
+- 验证：`go build ./...` ✅；`go test ./relay/channel/ali/...` ✅（新增测试）；`bun run typecheck` ✅；`bun run build` ✅。
+- 提交：dev 上的 merge commit + 本账本提交，随后 `git push origin dev`。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
