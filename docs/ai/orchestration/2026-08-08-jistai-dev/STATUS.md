@@ -313,6 +313,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：保持 key `Verify routing with Playground or your client` 不变（避免 i18n 产生 extra 残留），仅更新 7 个语言包该 key 的值（en=…with Chat…、zh=使用聊天或你的客户端验证路由、zh-TW/fr/ja/ru/vi 同步）；经 `add-missing-keys.mjs` + `bun run i18n:sync`（临时脚本已删）。
 - 验证：sync 报告 missing/extras 均 0；`bun run build` ✅；镜像重建 + 容器重启；dist bundle 已含新值（`routing with Chat or your client`；残留 Playground 为 i18n key 本身）。
 - 提交：643e61a8（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`ba2b89e4..3d6fe92a  dev -> dev`（7 个提交：部署准备撤销、教程文档功能、主页 Hero 按钮、设置引导文案 i18n 等）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
