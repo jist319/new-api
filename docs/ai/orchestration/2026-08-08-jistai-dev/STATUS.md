@@ -312,7 +312,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 需求：「设置引导 → 3. 发送请求」下小字「使用 Playground 或你的客户端验证路由」改为「使用聊天或你的客户端验证路由」。
 - 改动：保持 key `Verify routing with Playground or your client` 不变（避免 i18n 产生 extra 残留），仅更新 7 个语言包该 key 的值（en=…with Chat…、zh=使用聊天或你的客户端验证路由、zh-TW/fr/ja/ru/vi 同步）；经 `add-missing-keys.mjs` + `bun run i18n:sync`（临时脚本已删）。
 - 验证：sync 报告 missing/extras 均 0；`bun run build` ✅；镜像重建 + 容器重启；dist bundle 已含新值（`routing with Chat or your client`；残留 Playground 为 i18n key 本身）。
-- 提交：见下（本地，未推送）。
+- 提交：643e61a8（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
