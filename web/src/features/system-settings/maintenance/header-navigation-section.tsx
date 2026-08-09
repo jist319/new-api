@@ -165,7 +165,7 @@ export function HeaderNavigationSection({
     },
     {
       key: 'docs',
-      title: t('Docs'),
+      title: t('Tutorial Docs'),
       description: t('Documentation or external knowledge base.'),
     },
     {

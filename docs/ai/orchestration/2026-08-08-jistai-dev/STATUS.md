@@ -284,6 +284,21 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 用户中断部署准备并要求撤销：① 删除本会话生成的专用 SSH 密钥 `id_ed25519_jistai`（私钥+公钥，公钥从未安装到服务器，无需服务器侧清理）；② 删除部署镜像 `jist319/new-api:dev-2026-08-09`（300MB，构建已完成但未用于任何容器/未上传）。
 - 验证：密钥文件不存在、镜像 tag 不存在；本地运行镜像 `new-api-dev:local` 不受影响；服务器与远端未做任何变更（此前 main/dev 同步记录保持不变）。
 - 下一步：待用户明确部署安排后再继续（届时重新生成密钥/镜像，流程见 PLAN 部署章节）。
+
+## 功能：教程文档（2026-08-10）
+
+- 需求：① 顶栏「文档」改名「教程文档」；② 系统设置 → 站点与品牌 → 系统信息 新增「教程文档」自定义内容；**留空以禁用**；支持 Markdown、HTML 或完整 URL 重定向。
+- 后端：新增选项 `TutorialDoc`（`common/constants.go` 默认空、`model/option.go` OptionMap 注册 + UpdateOption case、`controller/misc.go` 状态暴露 `tutorial_doc` + 新增 `GET /api/tutorial-doc`、`router/api-router.go` 注册路由）。
+- 前端：
+  - 新增 `features/tutorial/`（api/types/tutorial-doc，复用 `LegalDocument` 渲染 Markdown/HTML/URL）+ 路由 `/tutorial`；
+  - `use-top-nav-links.ts`：`tutorial_doc` 为空 → 不显示；http(s) URL → 外部新标签；其它 → 内置 `/tutorial` 页（标题 `Tutorial Docs`）；
+  - `header-navigation-section.tsx` 文档模块名同步为「教程文档」；
+  - 系统信息表单新增 `TutorialDoc` 字段（Textarea + 描述「留空禁用…」）；`SiteSettings` 类型/default/registry 同步；
+  - i18n：7 语言新增 4 个 key（经 `add-missing-keys.mjs` + `bun run i18n:sync`，临时脚本已删）。
+- 验证：`go build ./...` ✅、`go vet` ✅；`bun run typecheck` ✅、`bun run build` ✅（routeTree 重新生成含 `/tutorial`）；镜像 `new-api-dev:local` 重建 + 容器重启。
+- API 实测：`/api/status.tutorial_doc` 初始空 → PUT 保存 Markdown（中文 roundtrip ok）→ status/`/api/tutorial-doc` 一致；URL 模式 → 返回完整 URL；清空 → `""`（禁用）；`/api/option/` 含 `TutorialDoc`；`/tutorial` 200；dist bundle 含「教程文档 / Tutorial Docs / /tutorial」。
+- 备注：本地 DB 当前留有 Markdown 示例（顶栏会显示「教程文档」，点开可看效果）；正式使用请在 系统设置→站点与品牌→系统信息 编辑，或清空禁用。lint 仍为上游存量错误（D008），本次新文件无新增。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote

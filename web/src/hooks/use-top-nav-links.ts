@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
+import { isHttpUrl } from '@/lib/content-format'
 import { parseHeaderNavModulesFromStatus } from '@/lib/nav-modules'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -55,8 +56,10 @@ export function useTopNavLinks(): TopNavLink[] {
     )
   }, [status])
 
-  // Documentation link (may be external)
-  const docsLink: string | undefined = status?.docs_link as string | undefined
+  // Tutorial documentation content (Markdown/HTML page or external URL)
+  const tutorialDoc: string | undefined = status?.tutorial_doc as
+    | string
+    | undefined
 
   const isAuthed = !!auth?.user
 
@@ -86,12 +89,16 @@ export function useTopNavLinks(): TopNavLink[] {
     links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
   }
 
-  // Docs (supports external links)
-  if (modules?.docs !== false) {
-    if (docsLink) {
-      links.push({ title: t('Docs'), href: docsLink, external: true })
+  // Tutorial Docs (empty content disables the entry; full URL opens externally)
+  if (modules?.docs !== false && tutorialDoc) {
+    if (isHttpUrl(tutorialDoc)) {
+      links.push({
+        title: t('Tutorial Docs'),
+        href: tutorialDoc,
+        external: true,
+      })
     } else {
-      links.push({ title: t('Docs'), href: '/docs' })
+      links.push({ title: t('Tutorial Docs'), href: '/tutorial' })
     }
   }
 

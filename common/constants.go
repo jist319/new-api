@@ -21,6 +21,11 @@ var TopUpLink = ""
 // Code" action; empty disables the entry.
 var RedemptionCodeLink = ""
 
+// TutorialDoc is the customizable tutorial documentation content shown in the
+// top navigation "Tutorial Docs" entry. Empty disables the entry. Supports
+// Markdown, HTML, or a full URL that redirects users to an external page.
+var TutorialDoc = ""
+
 // var ChatLink = ""
 // var ChatLink2 = ""
 var QuotaPerUnit = 500 * 1000.0 // $0.002 / 1K tokens
