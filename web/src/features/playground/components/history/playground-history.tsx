@@ -64,7 +64,7 @@ export function PlaygroundHistoryPanel({
       <aside
         className={cn(
           'bg-background md:bg-muted/20 flex shrink-0 flex-col overflow-hidden border-r transition-[width,transform] duration-300 ease-in-out',
-          'absolute inset-y-0 left-0 z-30 w-[85%] max-w-80 shadow-xl md:static md:z-auto',
+          'absolute inset-y-0 left-0 z-30 w-1/3 shadow-xl md:static md:z-auto',
           mobileOpen
             ? 'translate-x-0'
             : '-translate-x-full pointer-events-none',
@@ -82,7 +82,11 @@ export function PlaygroundHistoryPanel({
             variant='ghost'
             size='icon-sm'
             aria-label={t('Collapse history')}
-            onClick={() => setCollapsed(true)}
+            onClick={() => {
+              // Mobile: close the drawer; desktop: collapse the side panel.
+              setMobileOpen(false)
+              setCollapsed(true)
+            }}
           >
             <PanelLeftClose className='size-4' />
           </Button>

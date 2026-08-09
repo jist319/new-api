@@ -342,6 +342,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：①背景改为不透明 `bg-background`（桌面仍 `md:bg-muted/20`）；②面板改为常驻 + `translate-x` 滑动（`-translate-x-full ↔ translate-x-0`，`transition-[width,transform] duration-300`），遮罩加 `animate-in fade-in-0`；③宽度改 `w-[85%] max-w-80`（约占屏 85%，上限 320px）。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
 - 提交：2300e1c7（本地，未推送）。
+
+## 修复：手机端历史抽屉宽度改为 1/3 + 收起按钮可用（2026-08-10）
+
+- 用户反馈：①手机端抽屉里「收起」按钮点了没反应；②85% 屏宽不符合预期，应为 **33%（1/3）**。
+- 修复：①收起按钮 onClick 同时 `setMobileOpen(false)`（手机=关闭抽屉）与 `setCollapsed(true)`（桌面=折叠侧栏）；②手机端宽度从 `w-[85%] max-w-80` 改为 `w-1/3`（33.33% 屏宽，无上限），桌面端仍 `md:w-60`/折叠 `md:w-0` 不变。
+- 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
