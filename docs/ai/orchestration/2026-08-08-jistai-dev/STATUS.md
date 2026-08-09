@@ -299,6 +299,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - API 实测：`/api/status.tutorial_doc` 初始空 → PUT 保存 Markdown（中文 roundtrip ok）→ status/`/api/tutorial-doc` 一致；URL 模式 → 返回完整 URL；清空 → `""`（禁用）；`/api/option/` 含 `TutorialDoc`；`/tutorial` 200；dist bundle 含「教程文档 / Tutorial Docs / /tutorial」。
 - 备注：本地 DB 当前留有 Markdown 示例（顶栏会显示「教程文档」，点开可看效果）；正式使用请在 系统设置→站点与品牌→系统信息 编辑，或清空禁用。lint 仍为上游存量错误（D008），本次新文件无新增。
 - 提交：760984be（本地，未推送）。
+
+## UI：主页 Hero「文档」按钮同步为教程文档（2026-08-10）
+
+- 需求：主页「前往仪表盘 / Get Started」右侧的「文档」按钮也要改。
+- 改动：`hero.tsx` 不再读取 `docs_link`（去掉 `https://docs.newapi.pro` 兜底），改读 `tutorial_doc`：空 → 按钮隐藏；http(s) URL → 外链新标签；其它 → 内置 `/tutorial`；文案 `Tutorial Docs`（7 语言 key 已存在）。
+- 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status.tutorial_doc` 持久化（重启后内容保留，此前一次 `"1"` 为测试临时态，非功能问题）；当前 DB 留有 61 字符 Markdown 演示。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
