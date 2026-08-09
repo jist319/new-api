@@ -376,6 +376,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：`bun run build` ✅；镜像重建 + 容器重启；`/` 页面含 apple-touch-icon / sizes192 / manifest.json；`/manifest.json` 200 + `application/json`；`/jistai-logo.png` 200。
 - 注意：手机端需**删除旧书签/旧“添加到主屏幕”图标重新添加**才会生效（书签会快照旧图标）。
 - 提交：8edba5e2（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10 第五次，含重试）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 首次推送因 GitHub 连接被重置/超时失败 3 次（本机到 20.205.243.166:443 不通，属间歇性网络抖动）；`git ls-remote` 连通后重试成功。
+- 推送结果：`61330b5e..fe647fb5  dev -> dev`（2 个提交：移动端书签图标修复 + STATUS 记录）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
