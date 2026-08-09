@@ -63,8 +63,8 @@ export function PlaygroundHistoryPanel({
     <>
       <aside
         className={cn(
-          'bg-background md:bg-muted/20 flex shrink-0 flex-col overflow-hidden border-r transition-[width,transform] duration-300 ease-in-out',
-          'absolute inset-y-0 left-0 z-30 w-1/3 shadow-xl md:static md:z-auto',
+          'bg-background md:bg-muted/20 flex shrink-0 flex-col overflow-hidden border-r transition-[transform,width] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+          'absolute inset-y-0 left-0 z-30 w-1/2 shadow-xl md:static md:z-auto',
           mobileOpen
             ? 'translate-x-0'
             : '-translate-x-full pointer-events-none',
@@ -174,13 +174,14 @@ export function PlaygroundHistoryPanel({
         </Button>
       )}
 
-      {/* Mobile: backdrop to close the history drawer */}
-      {mobileOpen && (
-        <div
-          className='animate-in fade-in-0 absolute inset-0 z-20 bg-black/40 duration-300 md:hidden'
-          onClick={closeMobile}
-        />
-      )}
+      {/* Mobile: backdrop to close the history drawer (fades in/out) */}
+      <div
+        className={cn(
+          'absolute inset-0 z-20 bg-black/40 transition-opacity duration-500 md:hidden',
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        onClick={closeMobile}
+      />
 
       {collapsed && (
         <Button
