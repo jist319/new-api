@@ -349,6 +349,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：①收起按钮 onClick 同时 `setMobileOpen(false)`（手机=关闭抽屉）与 `setCollapsed(true)`（桌面=折叠侧栏）；②手机端宽度从 `w-[85%] max-w-80` 改为 `w-1/3`（33.33% 屏宽，无上限），桌面端仍 `md:w-60`/折叠 `md:w-0` 不变。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
 - 提交：b149654c（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10 第三次）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`4a094c37..9d146f55  dev -> dev`（4 个提交：手机端历史抽屉 85% 修复、1/3 宽度 + 收起按钮修复及 STATUS 记录）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
