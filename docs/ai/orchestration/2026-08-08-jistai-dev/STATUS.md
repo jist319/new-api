@@ -375,7 +375,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：`index.html` 增加 `apple-touch-icon`(180)、`sizes=192x192/512x512` icon、`manifest` 引用、`apple-mobile-web-app-title=JistAI`，静态 title 同步改 JistAI；新增 `web/public/manifest.json`（name/short_name=JistAI、standalone、192/512 图标指向 /jistai-logo.png）。因 Go MIME 表不识别 `.webmanifest`（会返回 text/plain），改用 `.json`（application/json）。
 - 验证：`bun run build` ✅；镜像重建 + 容器重启；`/` 页面含 apple-touch-icon / sizes192 / manifest.json；`/manifest.json` 200 + `application/json`；`/jistai-logo.png` 200。
 - 注意：手机端需**删除旧书签/旧“添加到主屏幕”图标重新添加**才会生效（书签会快照旧图标）。
-- 提交：见下（本地，未推送）。
+- 提交：8edba5e2（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
