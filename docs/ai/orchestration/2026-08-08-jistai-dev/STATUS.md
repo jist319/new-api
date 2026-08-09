@@ -328,6 +328,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 验证：`bun typecheck`/`build` ✅（playground 历史 chunk 已更新）；镜像重建 + 容器重启；`/api/status` ok。
 - 说明：历史记录按设计只存本浏览器 localStorage，手机与电脑是不同浏览器/设备，各自独立，不互通。
 - 提交：5fdcd438（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10 第二次）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`51185fc0..2db6306a  dev -> dev`（2 个提交：手机端历史面板修复 + STATUS 哈希记录）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
