@@ -362,6 +362,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 改动：宽度 `w-1/3` → `w-1/2`；抽屉滑动改用 500ms `cubic-bezier(0.32,0.72,0,1)` 弹性缓动（开合双向平滑）；遮罩改为常驻元素 + `opacity` 过渡（`transition-opacity duration-500`），关闭时淡出不再瞬间消失。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
 - 提交：65e367a6（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10 第四次）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`ee2eb0b7..5cb56496  dev -> dev`（2 个提交：手机端历史抽屉 50% 宽度 + 优雅动画及 STATUS 记录）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
