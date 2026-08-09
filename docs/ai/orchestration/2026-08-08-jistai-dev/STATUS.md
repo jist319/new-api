@@ -278,6 +278,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - dev：`git merge main` 无冲突（ort 自动合并 3 文件）。
 - 验证：`go build ./...` ✅；`go test ./relay/channel/ali/...` ✅（新增测试）；`bun run typecheck` ✅；`bun run build` ✅。
 - 提交：dev 上的 merge commit + 本账本提交，随后 `git push origin dev`。
+
+## 部署准备：撤销（2026-08-09）
+
+- 用户中断部署准备并要求撤销：① 删除本会话生成的专用 SSH 密钥 `id_ed25519_jistai`（私钥+公钥，公钥从未安装到服务器，无需服务器侧清理）；② 删除部署镜像 `jist319/new-api:dev-2026-08-09`（300MB，构建已完成但未用于任何容器/未上传）。
+- 验证：密钥文件不存在、镜像 tag 不存在；本地运行镜像 `new-api-dev:local` 不受影响；服务器与远端未做任何变更（此前 main/dev 同步记录保持不变）。
+- 下一步：待用户明确部署安排后再继续（届时重新生成密钥/镜像，流程见 PLAN 部署章节）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
