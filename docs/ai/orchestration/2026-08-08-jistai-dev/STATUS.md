@@ -262,7 +262,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 排查：`web/public/jistai-logo.png` 与用户源文件 `D:\图片\logo\JistAi\JistAILogo.png` SHA-256 完全一致（9EB8765A20A2F3D0...），`web/index.html` 也已指向 `/jistai-logo.png`；但 Rsbuild 因 `web/public/favicon.ico` 存在，在构建产物 `<head>` 末尾自动注入 `<link rel="icon" href="/favicon.ico">`，浏览器取后者 → 标签页仍显示旧图标。DB 无 Logo 选项（status 返回空），前端不会用状态值覆盖 favicon，故根因就是重复的 favicon.ico。
 - 修复：删除 `web/public/favicon.ico`（仓库内无任何代码引用，git 历史可回退）；重建后 `dist/index.html` 只剩 `<link rel="icon" type="image/png" href="/jistai-logo.png">`。
 - 验证：`bun run build` ✅；镜像 `new-api-dev:local` 重建 + 容器重启；`curl localhost:3000/` 仅 1 个 icon 链接（jistai-logo.png）、无 favicon.ico；`/jistai-logo.png` 200 image/png 222734B。
-- 提交：见当前 git log（本地，未推送）。
+- 提交：14f023b4（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
