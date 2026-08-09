@@ -361,7 +361,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 需求：手机端历史抽屉宽度调到 **50%**；过渡动画更优雅。
 - 改动：宽度 `w-1/3` → `w-1/2`；抽屉滑动改用 500ms `cubic-bezier(0.32,0.72,0,1)` 弹性缓动（开合双向平滑）；遮罩改为常驻元素 + `opacity` 过渡（`transition-opacity duration-500`），关闭时淡出不再瞬间消失。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
-- 提交：见下（本地，未推送）。
+- 提交：65e367a6（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
