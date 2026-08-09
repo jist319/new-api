@@ -55,13 +55,20 @@ export function PlaygroundHistoryPanel({
 }: PlaygroundHistoryPanelProps) {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const closeMobile = () => setMobileOpen(false)
 
   return (
     <>
       <aside
         className={cn(
-          'bg-muted/20 hidden shrink-0 flex-col overflow-hidden border-r transition-[width] duration-300 ease-in-out md:flex',
-          collapsed ? 'w-0 border-r-0' : 'w-60'
+          'bg-muted/20 shrink-0 flex-col overflow-hidden border-r transition-[width] duration-300 ease-in-out',
+          mobileOpen
+            ? 'absolute inset-y-0 left-0 z-30 flex w-60 shadow-xl'
+            : 'hidden',
+          'md:static md:z-auto md:flex',
+          collapsed ? 'md:w-0 md:border-r-0' : 'md:w-60'
         )}
       >
       <div className='flex items-center justify-between gap-2 border-b px-3 py-2.5'>
@@ -82,7 +89,10 @@ export function PlaygroundHistoryPanel({
             variant='ghost'
             size='sm'
             className='gap-1 px-2 text-xs'
-            onClick={onNew}
+            onClick={() => {
+              closeMobile()
+              onNew()
+            }}
           >
             <Plus className='size-3.5' />
             {t('New Chat')}
@@ -108,7 +118,10 @@ export function PlaygroundHistoryPanel({
                   <button
                     type='button'
                     className='min-w-0 flex-1 text-left'
-                    onClick={() => onSelect(entry)}
+                    onClick={() => {
+                      closeMobile()
+                      onSelect(entry)
+                    }}
                   >
                     <div className='truncate text-xs font-medium'>
                       {entry.title || t('New Chat')}
@@ -142,13 +155,35 @@ export function PlaygroundHistoryPanel({
         </p>
       </div>
       </aside>
+
+      {/* Mobile: floating history entry button (hidden on md+) */}
+      {!mobileOpen && (
+        <Button
+          variant='ghost'
+          size='icon-sm'
+          aria-label={t('Expand history')}
+          onClick={() => setMobileOpen(true)}
+          className='bg-background/80 absolute top-2 left-2 z-10 rounded-md shadow-sm backdrop-blur md:hidden'
+        >
+          <PanelLeftOpen className='size-4' />
+        </Button>
+      )}
+
+      {/* Mobile: backdrop to close the history drawer */}
+      {mobileOpen && (
+        <div
+          className='absolute inset-0 z-20 bg-black/30 md:hidden'
+          onClick={closeMobile}
+        />
+      )}
+
       {collapsed && (
         <Button
           variant='ghost'
           size='icon-sm'
           aria-label={t('Expand history')}
           onClick={() => setCollapsed(false)}
-          className='animate-in fade-in-0 slide-in-from-left-2 absolute left-2 top-2 z-10 duration-200'
+          className='animate-in fade-in-0 slide-in-from-left-2 absolute top-2 left-2 z-10 hidden duration-200 md:inline-flex'
         >
           <PanelLeftOpen className='size-4' />
         </Button>

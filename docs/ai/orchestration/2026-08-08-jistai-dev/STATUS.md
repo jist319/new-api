@@ -319,6 +319,15 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
 - 推送结果：`ba2b89e4..3d6fe92a  dev -> dev`（7 个提交：部署准备撤销、教程文档功能、主页 Hero 按钮、设置引导文案 i18n 等）。
 - 本账本更新后另行提交并推送。
+
+## 修复：手机端聊天「历史」面板无法显示（2026-08-10）
+
+- 现象：手机访问「聊天」时历史对话记录看不到。
+- 根因：`playground-history.tsx` 的 `<aside>` 写死 `hidden md:flex` —— <768px 下面板整体隐藏，且展开按钮仅在折叠态渲染，手机端没有任何入口。
+- 修复：面板移动端改为抽屉浮层（`absolute inset-y-0 left-0 z-30 w-60`），默认隐藏；聊天区左上角新增浮动「历史」入口按钮（`md:hidden`，仅手机显示），点击打开；打开时显示半透明遮罩（点遮罩关闭），选择对话/新建对话后自动关闭；桌面端行为不变（静态侧栏 + 折叠）。
+- 验证：`bun typecheck`/`build` ✅（playground 历史 chunk 已更新）；镜像重建 + 容器重启；`/api/status` ok。
+- 说明：历史记录按设计只存本浏览器 localStorage，手机与电脑是不同浏览器/设备，各自独立，不互通。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
