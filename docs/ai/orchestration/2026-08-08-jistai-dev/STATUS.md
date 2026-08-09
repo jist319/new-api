@@ -348,7 +348,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 用户反馈：①手机端抽屉里「收起」按钮点了没反应；②85% 屏宽不符合预期，应为 **33%（1/3）**。
 - 修复：①收起按钮 onClick 同时 `setMobileOpen(false)`（手机=关闭抽屉）与 `setCollapsed(true)`（桌面=折叠侧栏）；②手机端宽度从 `w-[85%] max-w-80` 改为 `w-1/3`（33.33% 屏宽，无上限），桌面端仍 `md:w-60`/折叠 `md:w-0` 不变。
 - 验证：`bun typecheck`/`build` ✅；镜像重建 + 容器重启；`/api/status` ok。
-- 提交：见下（本地，未推送）。
+- 提交：b149654c（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
