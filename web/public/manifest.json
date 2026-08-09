@@ -1,0 +1,20 @@
+{
+  "name": "JistAI",
+  "short_name": "JistAI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/jistai-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/jistai-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
