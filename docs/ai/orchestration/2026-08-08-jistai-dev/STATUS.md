@@ -263,6 +263,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：删除 `web/public/favicon.ico`（仓库内无任何代码引用，git 历史可回退）；重建后 `dist/index.html` 只剩 `<link rel="icon" type="image/png" href="/jistai-logo.png">`。
 - 验证：`bun run build` ✅；镜像 `new-api-dev:local` 重建 + 容器重启；`curl localhost:3000/` 仅 1 个 icon 链接（jistai-logo.png）、无 favicon.ico；`/jistai-logo.png` 200 image/png 222734B。
 - 提交：14f023b4（本地，未推送）。
+
+## 交付：dev 分支推送 origin（2026-08-09）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`77b874a7..ba188fc6  dev -> dev`（共 25 个提交，含历史面板/折叠动画/附件联网参数/兑换码/favicon 修复等全部二开内容）。
+- 本账本更新后另行提交并推送（见下）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
