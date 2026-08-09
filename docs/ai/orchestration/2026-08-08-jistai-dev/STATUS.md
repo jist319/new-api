@@ -327,7 +327,7 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：面板移动端改为抽屉浮层（`absolute inset-y-0 left-0 z-30 w-60`），默认隐藏；聊天区左上角新增浮动「历史」入口按钮（`md:hidden`，仅手机显示），点击打开；打开时显示半透明遮罩（点遮罩关闭），选择对话/新建对话后自动关闭；桌面端行为不变（静态侧栏 + 折叠）。
 - 验证：`bun typecheck`/`build` ✅（playground 历史 chunk 已更新）；镜像重建 + 容器重启；`/api/status` ok。
 - 说明：历史记录按设计只存本浏览器 localStorage，手机与电脑是不同浏览器/设备，各自独立，不互通。
-- 提交：见下（本地，未推送）。
+- 提交：5fdcd438（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
