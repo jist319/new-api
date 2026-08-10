@@ -383,6 +383,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 首次推送因 GitHub 连接被重置/超时失败 3 次（本机到 20.205.243.166:443 不通，属间歇性网络抖动）；`git ls-remote` 连通后重试成功。
 - 推送结果：`61330b5e..fe647fb5  dev -> dev`（2 个提交：移动端书签图标修复 + STATUS 记录）。
 - 本账本更新后另行提交并推送。
+
+## 修复：Shadow DOM 内 #id 锚点跳转不生效（2026-08-10）
+
+- 现象：/about、/tutorial、/user-agreement、/privacy-policy 的 HTML 内容页里 `#锚点` 点击无反应（内容经 Shadow DOM 隔离渲染，浏览器锚点导航只认主文档 id）。
+- 修复：`web/src/components/html-content.tsx` 的 `IsolatedHtmlContent` 在 shadowRoot 上挂 click 监听——找 `a[href^="#"]` 最近祖先 → 解析 id → shadowRoot 内查找目标（回退 wrapper）→ `preventDefault()` + `scrollIntoView({behavior:'smooth',block:'start'})`；useEffect 清理时移除监听；基础样式加 `[id]{scroll-margin-top:24px}` 防遮挡。
+- 验证：`bun install`/`typecheck`/`build` ✅；`lint` 仅上游存量（D008，本文件无新增）；`go build ./...` ✅；无头 Chrome CDP 四页实测点击锚点均触发平滑滚动 ✅（本地测试用长 HTML 示例，已恢复原 DB 值）。
+- 提交：见下（本地，未推送）。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
