@@ -56,6 +56,10 @@ const isolatedContentBaseStyles = `
   iframe {
     border: 0;
   }
+
+  [id] {
+    scroll-margin-top: 24px;
+  }
 </style>
 `
 
@@ -175,7 +179,60 @@ function IsolatedHtmlContent(props: {
       attributeFilter: ['class'],
     })
 
-    return () => observer.disconnect()
+    const handleShadowClick = (event: Event) => {
+      const mouseEvent = event as MouseEvent
+      if (
+        event.defaultPrevented ||
+        mouseEvent.button !== 0 ||
+        mouseEvent.metaKey ||
+        mouseEvent.ctrlKey ||
+        mouseEvent.shiftKey ||
+        mouseEvent.altKey
+      ) {
+        return
+      }
+
+      const eventTarget = event.target as Element | null
+      if (!eventTarget) {
+        return
+      }
+
+      const anchor = eventTarget.closest(
+        'a[href^="#"]'
+      ) as HTMLAnchorElement | null
+      if (!anchor) {
+        return
+      }
+
+      const rawId = anchor.getAttribute('href')?.slice(1) ?? ''
+      if (!rawId) {
+        return
+      }
+
+      let id = rawId
+      try {
+        id = decodeURIComponent(rawId)
+      } catch {
+        // Keep the raw fragment when it is not valid percent-encoding.
+      }
+
+      const destination =
+        shadowRoot.getElementById(id) ??
+        wrapper.querySelector(`[id="${CSS.escape(id)}"]`)
+      if (!destination) {
+        return
+      }
+
+      event.preventDefault()
+      destination.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    shadowRoot.addEventListener('click', handleShadowClick)
+
+    return () => {
+      observer.disconnect()
+      shadowRoot.removeEventListener('click', handleShadowClick)
+    }
   }, [props.html])
 
   return (
