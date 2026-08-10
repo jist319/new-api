@@ -390,6 +390,12 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 修复：`web/src/components/html-content.tsx` 的 `IsolatedHtmlContent` 在 shadowRoot 上挂 click 监听——找 `a[href^="#"]` 最近祖先 → 解析 id → shadowRoot 内查找目标（回退 wrapper）→ `preventDefault()` + `scrollIntoView({behavior:'smooth',block:'start'})`；useEffect 清理时移除监听；基础样式加 `[id]{scroll-margin-top:24px}` 防遮挡。
 - 验证：`bun install`/`typecheck`/`build` ✅；`lint` 仅上游存量（D008，本文件无新增）；`go build ./...` ✅；无头 Chrome CDP 四页实测点击锚点均触发平滑滚动 ✅（本地测试用长 HTML 示例，已恢复原 DB 值）。
 - 提交：见下（本地，未推送）。
+
+## 交付：dev 推送 origin（2026-08-10 第六次）
+
+- 用户明确要求「推送」；推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、测试账号密码、DB 口令等）无命中。
+- 推送结果：`78658e25..1ba6c995  dev -> dev`（2 个提交：Shadow DOM 锚点修复实现 + STATE/STATUS 验证记录）。
+- 本账本更新后另行提交并推送。
 ## 已完成
 
 - [x] clone fork（`--branch dev`）+ 添加 `upstream` remote
