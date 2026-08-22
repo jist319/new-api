@@ -320,6 +320,13 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - 推送结果：`ba2b89e4..3d6fe92a  dev -> dev`（7 个提交：部署准备撤销、教程文档功能、主页 Hero 按钮、设置引导文案 i18n 等）。
 - 本账本更新后另行提交并推送。
 
+## 交付：同步源作者 main 并合并到 dev（2026-08-23）
+
+- 源仓库 `upstream/main` 从 `823e2630` 更新到 `2d8e50bf`，共同步 38 个提交；本地 `main` 使用 fast-forward 更新。
+- fork 的 `origin/main` 已通过 GitHub「Sync fork」更新，页面验证为与 `QuantumNous/new-api:main` 同步，最新提交 `2d8e50bf`。
+- `main` 以 `--no-ff` 合并到 `dev`，无冲突，生成合并提交 `c371c6cab`；`origin/dev` 已推送并验证与本地一致（`dac90994c..c371c6cab`）。
+- 验证：`git diff --check` ✅；当前工作区仅保留未跟踪的本地构建文件 `Dockerfile.local`。本次 shell 未提供 `go`/`bun` 命令，未重复运行构建与前端检查。
+
 ## 修复：手机端聊天「历史」面板无法显示（2026-08-10）
 
 - 现象：手机访问「聊天」时历史对话记录看不到。
