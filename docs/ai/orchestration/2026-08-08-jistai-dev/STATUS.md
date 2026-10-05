@@ -452,7 +452,16 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
   - `node scripts/sync-i18n.mjs`：✅ 7 语言 missing/extras 均为 0（`_reports/_sync-report.json`）；untranslated 计数 zh=3、fr=9、vi=9、ja=29、ru=29、zh-TW=0（上游新增 key 尚未翻译，回退英文）
   - 二开功能点存活抽查：✅ `/webchat/lobe`、`/pg/responses`、`actionsChat` 开关、`TutorialDoc`、playground 历史抽屉（`w-1/2` + 500ms `cubic-bezier(0.32,0.72,0,1)`）、JistAI 品牌（footer / DEFAULT_SYSTEM_NAME / index.html）
   - `go build ./...`、`bun run typecheck`、`bun run build`：❌ **未执行** —— 本机未安装 Go 与 Bun（`where go` / `where bun` 均无结果，仅 node/npm 可用）；Docker 亦不可用，本地容器未重建
-- 备注：`Dockerfile.local` 保持未跟踪，未提交；本次未 push。
+- 备注：`Dockerfile.local` 保持未跟踪，未提交。
+
+## 交付：main 与 dev 推送 origin（2026-10-06）
+
+- 用户明确要求推送两个分支。
+- 推送前对 `origin/dev..dev` 全量 diff 做密钥扫描（`sk-` 长密钥、`api_key`/`password` 赋值、`Bearer`、`postgres://`/`mysql://` DSN）：仅命中上游测试夹具里的占位值（`placeholder`、`member-password-1` 等），无真实凭据。
+- 推送结果：
+  - `2d8e50bf3..b48b74ab7  main -> main`（fast-forward，GitHub「branch is 234 commits behind」横幅消除）
+  - `01217e350..ec4f32b38  dev -> dev`（236 个提交，含本次合并）
+- 验证：`git ls-remote origin refs/heads/main refs/heads/dev` 与本地 `main`/`dev` SHA 完全一致 ✅
 
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
