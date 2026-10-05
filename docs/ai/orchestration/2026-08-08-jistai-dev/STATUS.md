@@ -567,6 +567,23 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 
 - 备注：本次仅本地提交，未推送；`-1` 语义未改动 `0 = 不限额度` 的既有行为。
 
+## 修正：套餐额度语义翻转为 -1=不限量 / 0=不提供额度（2026-10-06）
+
+- 用户反馈：列表「套餐额度」列把 -1 显示成「无限制」不对；并明确要求 **-1 = 不限量，0 = 该套餐不提供额度**。
+- 改动（与上一节实现相反，已全量翻转）：
+  - `model/subscription.go`：`PreConsumeUserSubscription` 由「跳过负数总额」改为「**跳过 0 总额**」；负数总额（-1）走原有的 `AmountTotal > 0` 判断之外分支，即不限量。
+  - `controller/subscription.go`：校验消息改为「-1 表示不限量，0 表示该套餐不提供额度」（取值范围 `< -1` 仍拒绝）。
+  - 前端新增共用格式化 `formatTotalQuota(total, t)`（`features/subscriptions/lib/format.ts`）：`0 -> No quota`、`< 0 -> Unlimited`、`> 0 -> formatQuota`，并替换四处各自为政的判断：
+    - `subscriptions-columns.tsx` 的「套餐额度」列
+    - `subscriptions-purchase-dialog.tsx` 的 Plan Quota 行
+    - `wallet/components/subscription-plans-card.tsx` 的套餐权益与用户订阅剩余额度
+    - `subscriptions/dialogs/user-subscriptions-dialog.tsx` 的 Total Quota 列（此前 0 会显示成「无限制」）
+  - `plan-form.ts`：常量改名 `NO_QUOTA_PLAN_TOTAL` → `UNLIMITED_PLAN_TOTAL`（哨兵仍是 -1，只改语义与命名），`PLAN_FORM_DEFAULTS.total_amount` 由 `0` 改为 `-1`（新建套餐默认不限量，与旧行为对齐）。
+  - i18n：新增 `No quota` 与两条新的额度说明；同步删除两条已失效的旧文案 key（含 `static-keys.ts` 中的登记）。7 语言 missing/extras 全 0。
+- 测试：新增 `web/src/features/subscriptions/lib/__tests__/format.test.ts`（0 读作 No quota、-1 读作 Unlimited、正数渲染为额度）；`model/subscription_no_quota_test.go` 两个用例的参数对调后仍通过。
+- ⚠️ **语义与上游不一致，需知晓**：上游 `TotalAmount = 0` 一直是「不限额度」，现在 0 变成「不提供额度」。**升级前已存在、额度为 0 的套餐会从「不限量」变成「不发放任何额度」**。本机当前只有 1 个套餐且已被设为 -1，无历史数据受影响；其他部署若沿用旧数据需自行把 0 改成 -1。数据库列默认值 `default:0` 未改（SQLite 不支持改列默认值，改了会导致 GORM 每次启动重复 ALTER），新套餐的默认值由前端表单与 Go 侧显式赋值保证。
+- 验证：`go build`/`go vet` ✅；`go test ./model/ -run TestPreConsume` ✅；`bun run typecheck` ✅；`bun run test`（见下）；lint 与基线一致。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。
