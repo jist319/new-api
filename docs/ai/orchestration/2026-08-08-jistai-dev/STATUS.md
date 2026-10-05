@@ -584,6 +584,52 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - ⚠️ **语义与上游不一致，需知晓**：上游 `TotalAmount = 0` 一直是「不限额度」，现在 0 变成「不提供额度」。**升级前已存在、额度为 0 的套餐会从「不限量」变成「不发放任何额度」**。本机当前只有 1 个套餐且已被设为 -1，无历史数据受影响；其他部署若沿用旧数据需自行把 0 改成 -1。数据库列默认值 `default:0` 未改（SQLite 不支持改列默认值，改了会导致 GORM 每次启动重复 ALTER），新套餐的默认值由前端表单与 Go 侧显式赋值保证。
 - 验证：`go build`/`go vet` ✅；`go test ./model/ -run TestPreConsume` ✅；`bun run typecheck` ✅；`bun run test`（见下）；lint 与基线一致。
 
+## 功能：按分组的每用户并发限制（2026-10-06）
+
+- 需求：售卖「并发数」订阅——购买后把用户拉进一个不限量、不计费的分组，该分组对**每用户**限制同时进行的请求数。
+
+- 关键澄清（用户逐条确认）：
+  1. 「不限 token」= **该分组的模型倍率设为 0、完全不计费**（不是套餐额度不限量）。**这一条是纯配置，零代码**：`setting/ratio_setting/group_ratio.go` 的 `CheckGroupRatio` 只拒绝 `< 0`，0 合法；追了计费链确认 0 成本请求不会漏扣——`trySubscription` 会把 0 抬成 1 预扣订阅，结算时 `Settle(0 - 1 = -1)` 走 `PostConsumeUserSubscriptionDelta` 退回，净额 0；钱包路径 `preConsume(0)` 直接跳过。
+  2. 计数维度：**(分组, 用户)**。
+  3. 超限**排队等槽位**，等满超时才 429。
+  4. **Redis + 内存双路径**。
+  5. 异步任务按**未完成任务数**占用并发。
+  6. 按**当前请求实际使用的分组**取配置。
+
+- 实现：
+  - 配置层 `setting/rate_limit.go`：新增 `GroupConcurrencyLimit map[string]int`（组名 → 每用户并发上限，缺省/0 = 不限）与 `GroupConcurrencyQueueTimeoutSeconds`（默认 30，0 = 不排队直接 429），配套 `*2JSONString` / `Update*ByJSONString` / `Check*`。**单独开一个设置**而不是塞进 `ModelRequestRateLimitGroup`——后者是固定 `[2]int`，改形状会破坏已有配置与校验。
+  - 计数器 `common/group_concurrency.go`：`TryAcquireGroupConcurrencySlot(ctx, key, limit) -> (release, ok)`。Redis 路径用**排序集 + Lua 脚本**（清陈旧成员 → ZCARD 判定 → ZADD，单步原子，两个请求不可能同时拿到最后一个槽位）；成员带时间戳，进程被 kill 留下的槽位最多占用 1 小时后自愈，`INCR`/`DECR` 做不到这一点。无 Redis 时退回进程内计数。release 用 `sync.Once` 包住保证只执行一次（重复执行会把别人的槽位也放掉）。Redis 不可用时**失败开放**（放行 + 记日志），不因为限流存储故障阻断流量。
+  - 中间件 `middleware/group_concurrency.go`：读 `ContextKeyUsingGroup`（TokenAuth 已设好）→ 取该组上限 → `requestLimit = limit - 未完成任务数` → 在**同一原子判定**里申请剩余额度。任务数每分钟最多查一次（等待期间节流），查库失败视为 0。`defer release()` 挂在 `c.Next()` 外层，正常返回/panic/客户端断开/流式结束四条路径都会释放；流式请求全程占槽。
+  - 任务占用 `model/task.go`：`CountUnfinishedTasksByUserGroup`，按 `status NOT IN (SUCCESS, FAILURE)` 统计。**由数据库推导而非显式释放**，所以任务完成即自动释放，不存在进程崩溃后槽位泄漏。用 map 条件传 `group`（保留字），让 GORM 按方言加引号，避免依赖 `commonGroupCol`。
+  - 挂载：与 `ModelRequestRateLimit()` 并排的 7 处（`relay-router.go` ×2、`plugin-router.go`、`video-router.go`、`task-plugin-protocol-router.go` ×3），另**补挂**两处会创建异步任务的入口：`task-router.go` 的任务提交与 `video-router.go` 的 `/videos/:video_id/remix`——否则并发提交任务会同时读到「0 个未完成任务」而一起放行。
+  - 前端：`request-limits/` 新增 `concurrency-limit-visual-editor.tsx` 与 `concurrency-limit-dialog.tsx`，并在 `rate-limit-section.tsx` 加入「分组并发限制」（可视化/JSON 双模式）与「并发排队等待」两个字段。
+    - **为什么不并进现有那张表**：现有 `RateLimitVisualEditor` 的行是固定二元组，行内写回是原子的；把另一个有独立缺省值的设置并进同一行，会给原本没有限流条目的分组凭空写出 `[0, 1]`，而条目一旦存在就会生效——等于把该分组限成「每窗口 1 次成功请求」。属于会静默改变线上行为的能力缺口，因此单独成表。两者都复用 `StaticDataTable`、`StaticRowActions`、`Dialog` 与 `safeJsonParseWithValidation`。
+  - i18n：后端新增 `rate_limit.group_concurrency_reached`（en/zh-CN/zh-TW 三份 yaml）；前端新增 12 个 key，zh 与 zh-TW 人工翻译、其余回退英文。
+
+- 验证：
+  | 检查 | 结果 |
+  | --- | --- |
+  | `go build ./...` / `go vet ./...` / `gofmt -l` | ✅ |
+  | `go test ./common/ ./setting/ ./middleware/ ./router/` | ✅ |
+  | `go test ./...` | ✅ 仅剩既有问题：`controller` 263 条 Windows `TempDir RemoveAll` 清理失败（与改动前计数完全一致）、`service` 2 个 affinity 存量 flaky |
+  | 新增后端测试 | ✅ `common/group_concurrency_test.go`：达上限即拒、释放后可再入、**并发争抢 32 个请求只有 limit 个放行**、release 幂等（重复释放不得多放）、key 按 (分组,用户) 隔离、limit ≤ 0 不限；`setting/rate_limit_test.go`：负数/超限/非 JSON 一律拒绝、未列出的分组视为不限；`middleware/group_concurrency_test.go`：真 SQLite + gin 引擎跑通「占满 → 429 → 释放后 200」、**未完成任务占满槽位后请求被拒、任务转终态后放行**、未配置分组不受影响 |
+  | 前端 | ✅ `bun run typecheck`、`bun run build`；`bun run test` 176 文件 / 2171 用例全过（新增 `concurrency-limit.test.tsx` 2 例）；`bun run lint` 169 error / 66 warning（error 与基线一致，warning 因顺带清理了所触文件的旧 `parseInt` 告警而低于基线） |
+  | i18n | ✅ `i18n:sync` 7 语言 missing/extras 全 0 |
+  | 容器 | ✅ 重建成功、重启后 `/api/status` `success:true`；实际下发 bundle 含 `Group concurrency limits` / `Max Concurrency Per User` / `Concurrency queue wait` |
+
+- **怎么出一个「并发数」订阅**（配置步骤，无需再改代码）：
+  1. 分组倍率里新建分组（如 `并发1`），倍率设为 `0`（完全不计费）。
+  2. 系统设置 → 安全 → 限流 → 分组并发限制：`{"并发1": 1}`；并发排队等待按需设（0 = 立即 429）。
+  3. 订阅 → 新建套餐：额度按需（不限量填 `-1`），升级分组选 `并发1`，降级分组按需。
+  4. 用户购买后即被拉进该分组，其在该分组下的同时请求数被限制为 1，未完成任务一并计入。
+
+- 已知取舍（未做，需知晓）：
+  - 排队会**占住请求 goroutine 并每 200ms 查一次槽位**，高并发下等待中的请求数×5 次/秒的 Redis 调用；等待期间的未完成任务数每 1 秒才重查一次。
+  - **任务占用是「读数据库」而非原子预留**：同一瞬间发起的多个任务提交，理论上能在守卫放行彼此之前多透进去少量任务。已通过给任务提交路由也挂守卫把窗口收窄，但不是零。
+  - **游乐场 `/pg/*` 未挂**该中间件（与现有次数限流器保持一致）。
+  - 崩溃遗留的 Redis 槽位最多占满 1 小时（`groupConcurrencySlotTTL`）。
+  - 免费分组（倍率 0）+ 无订阅 + 钱包余额为 0 的用户，仍会被钱包路径的 `userQuota <= 0` 拦下——这是既有资金模型行为，有活跃订阅时走订阅路径不受影响。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。

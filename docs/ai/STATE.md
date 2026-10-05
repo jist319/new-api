@@ -2,7 +2,16 @@
 
 更新：2026-10-06
 
-## 当前任务：套餐额度语义翻转（-1=不限量 / 0=不提供额度）
+## 当前任务：按分组的每用户并发限制
+
+- 状态：**完成**（dev，本地提交，未推送）
+- 需求：售卖「并发数」订阅，买后把用户拉进一个**模型倍率 0、完全不计费**的分组，该分组对每用户限制同时进行的请求数。
+- 澄清结论：免费靠**分组倍率 0**（纯配置，已验证 `CheckGroupRatio` 允许 0 且 0 成本请求结算净额为 0）；计数维度 **(分组,用户)**；超限**排队等槽位**再 429；**Redis + 内存双路径**；**未完成任务数**计入并发；按**请求实际使用的分组**取配置。
+- 实现：`setting/rate_limit.go` 新增 `GroupConcurrencyLimit` + `GroupConcurrencyQueueTimeoutSeconds`；`common/group_concurrency.go` 用 Redis 排序集 + Lua 原子取槽（无 Redis 退回进程内），release 用 `sync.Once` 幂等，存储故障时失败开放；`middleware/group_concurrency.go` 读 `ContextKeyUsingGroup`，把未完成任务数从上限里扣掉后原子申请剩余额度，`defer release()` 覆盖全部退出路径；`model.CountUnfinishedTasksByUserGroup` 由数据库推导任务占用（任务转终态即自动释放，无泄漏）；挂载在现有次数限流器的 7 处 + 两处异步任务提交入口；前端新增独立的分组并发限制编辑器（见 STATUS 中「为什么不并进现有那张表」）。
+- ⚠️ 已知取舍：排队占用 goroutine 且每 200ms 轮询；任务占用是读库而非原子预留（极端瞬时提交可少量超出）；游乐场未挂；崩溃遗留槽位最多 1 小时。
+- 验证：`go build`/`go vet` ✅；`go test ./...` 仅剩既有 Windows 清理失败（263 条，与改动前一致）与 2 个 affinity flaky；新增 3 个测试文件覆盖守卫、配置校验与中间件端点行为；前端 typecheck/build ✅、`bun run test` 176 文件 / 2171 用例 ✅、lint error 与基线一致；容器重建后实测通过。
+
+## 上一任务：套餐额度语义翻转（-1=不限量 / 0=不提供额度）
 
 - 状态：**完成**（dev，本地提交，未推送）
 - 用户明确要求把上一轮的语义翻转：**-1 = 不限量**，**0 = 该套餐不提供额度**；列表「套餐额度」列也要对应显示（0 显示「不提供额度」）。
