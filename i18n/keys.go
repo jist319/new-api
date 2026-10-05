@@ -250,6 +250,9 @@ const (
 const (
 	MsgRateLimitReached      = "rate_limit.reached"
 	MsgRateLimitTotalReached = "rate_limit.total_reached"
+	// MsgGroupConcurrencyLimitExceeded reports that the group's per-user
+	// concurrency limit stayed full for the whole queue timeout.
+	MsgGroupConcurrencyLimitExceeded = "rate_limit.group_concurrency_reached"
 )
 
 // Setting related messages

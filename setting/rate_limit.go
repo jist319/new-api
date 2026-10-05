@@ -59,6 +59,72 @@ func GetGroupRateLimit(group string) (totalCount, successCount int, found bool) 
 	return limits[0], limits[1], true
 }
 
+// maxGroupConcurrencyLimit bounds a single group's per-user concurrency so an
+// operator cannot admit an unbounded number of simultaneous requests.
+const maxGroupConcurrencyLimit = 100000
+
+// GroupConcurrencyLimit caps how many requests one user may have in flight at
+// once while using a group. Groups absent from the map are unlimited, which is
+// also what an entry of 0 means.
+var GroupConcurrencyLimit = map[string]int{}
+var GroupConcurrencyLimitMutex sync.RWMutex
+
+// GroupConcurrencyQueueTimeoutSeconds is how long a request waits for a free
+// slot before it is rejected with 429. 0 rejects immediately instead of queueing.
+var GroupConcurrencyQueueTimeoutSeconds = 30
+
+func GroupConcurrencyLimit2JSONString() string {
+	GroupConcurrencyLimitMutex.RLock()
+	defer GroupConcurrencyLimitMutex.RUnlock()
+
+	jsonBytes, err := common.Marshal(GroupConcurrencyLimit)
+	if err != nil {
+		common.SysLog("error marshalling group concurrency limit: " + err.Error())
+	}
+	return string(jsonBytes)
+}
+
+func UpdateGroupConcurrencyLimitByJSONString(jsonStr string) error {
+	GroupConcurrencyLimitMutex.Lock()
+	defer GroupConcurrencyLimitMutex.Unlock()
+
+	limits := make(map[string]int)
+	if err := common.Unmarshal([]byte(jsonStr), &limits); err != nil {
+		return err
+	}
+	GroupConcurrencyLimit = limits
+	return nil
+}
+
+// GetGroupConcurrencyLimit returns the per-user concurrency cap for a group.
+// A missing group or a non-positive limit means unlimited.
+func GetGroupConcurrencyLimit(group string) int {
+	GroupConcurrencyLimitMutex.RLock()
+	defer GroupConcurrencyLimitMutex.RUnlock()
+
+	limit := GroupConcurrencyLimit[group]
+	if limit < 0 {
+		return 0
+	}
+	return limit
+}
+
+func CheckGroupConcurrencyLimit(jsonStr string) error {
+	limits := make(map[string]int)
+	if err := common.Unmarshal([]byte(jsonStr), &limits); err != nil {
+		return err
+	}
+	for group, limit := range limits {
+		if limit < 0 {
+			return fmt.Errorf("group %s has a negative concurrency limit: %d", group, limit)
+		}
+		if limit > maxGroupConcurrencyLimit {
+			return fmt.Errorf("group %s concurrency limit %d exceeds max %d", group, limit, maxGroupConcurrencyLimit)
+		}
+	}
+	return nil
+}
+
 func CheckModelRequestRateLimitGroup(jsonStr string) error {
 	checkModelRequestRateLimitGroup := make(map[string][2]int)
 	err := common.Unmarshal([]byte(jsonStr), &checkModelRequestRateLimitGroup)

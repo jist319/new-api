@@ -363,6 +363,27 @@ func TaskGetAllTasks(startIdx int, num int, queryParams SyncTaskQueryParams) []*
 	return tasks
 }
 
+// CountUnfinishedTasksByUserGroup counts the user's tasks that have not reached a
+// terminal status while using a group. The group concurrency guard adds this to
+// the in-flight request count, so a submitted task keeps occupying its slot
+// until it finishes.
+func CountUnfinishedTasksByUserGroup(userId int, group string) (int, error) {
+	if userId <= 0 {
+		return 0, nil
+	}
+	var count int64
+	// The group column is a reserved word, so it goes in as a map condition and
+	// lets GORM quote it for the active dialect.
+	err := DB.Model(&Task{}).
+		Where(map[string]any{"user_id": userId, "group": group}).
+		Where("status NOT IN ?", []string{TaskStatusFailure, TaskStatusSuccess}).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 func GetTimedOutUnfinishedTasks(cutoffUnix int64, limit int) []*Task {
 	var tasks []*Task
 	err := DB.Where("progress != ?", "100%").

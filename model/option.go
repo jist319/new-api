@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"maps"
 	"strconv"
 	"strings"
@@ -149,6 +150,8 @@ func InitOptionMap() {
 	common.OptionMap["ModelRequestRateLimitDurationMinutes"] = strconv.Itoa(setting.ModelRequestRateLimitDurationMinutes)
 	common.OptionMap["ModelRequestRateLimitSuccessCount"] = strconv.Itoa(setting.ModelRequestRateLimitSuccessCount)
 	common.OptionMap["ModelRequestRateLimitGroup"] = setting.ModelRequestRateLimitGroup2JSONString()
+	common.OptionMap["GroupConcurrencyQueueTimeoutSeconds"] = strconv.Itoa(setting.GroupConcurrencyQueueTimeoutSeconds)
+	common.OptionMap["GroupConcurrencyLimit"] = setting.GroupConcurrencyLimit2JSONString()
 	common.OptionMap["ModelRatio"] = ratio_setting.ModelRatio2JSONString()
 	common.OptionMap["ModelPrice"] = ratio_setting.ModelPrice2JSONString()
 	common.OptionMap["CacheRatio"] = ratio_setting.CacheRatio2JSONString()
@@ -244,6 +247,19 @@ func validateOptionValue(key string, value string) error {
 	}
 	if key == "MaxTokenAutoGroups" {
 		return setting.ValidateMaxTokenAutoGroups(value)
+	}
+	if key == "GroupConcurrencyLimit" {
+		return setting.CheckGroupConcurrencyLimit(value)
+	}
+	if key == "GroupConcurrencyQueueTimeoutSeconds" {
+		seconds, err := strconv.Atoi(value)
+		if err != nil {
+			return errors.New("group concurrency queue timeout must be an integer")
+		}
+		if seconds < 0 {
+			return errors.New("group concurrency queue timeout must not be negative")
+		}
+		return nil
 	}
 	return nil
 }
@@ -625,6 +641,10 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.ModelRequestRateLimitSuccessCount, _ = strconv.Atoi(value)
 	case "ModelRequestRateLimitGroup":
 		err = setting.UpdateModelRequestRateLimitGroupByJSONString(value)
+	case "GroupConcurrencyQueueTimeoutSeconds":
+		setting.GroupConcurrencyQueueTimeoutSeconds, _ = strconv.Atoi(value)
+	case "GroupConcurrencyLimit":
+		err = setting.UpdateGroupConcurrencyLimitByJSONString(value)
 	case "RetryTimes":
 		common.RetryTimes, _ = strconv.Atoi(value)
 	case "DataExportInterval":
