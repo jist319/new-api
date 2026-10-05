@@ -527,6 +527,46 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
   `/api/status` 返回体含二开字段 `RedemptionCodeLink`，`chats` 中 CC Switch 条目为 `name=JistAI`；首页 HTML title 为 JistAI、图标全指向 `jistai-logo.png` ✅
 - 备注：库为空，需重新走 4 步初始化向导；`VERSION` 是 0 字节空文件，镜像内版本号为空；`Dockerfile.local` 仍按约定保持未跟踪。
 
+## 功能：订阅无额度套餐 + 兑换码分组/订阅类型（2026-10-06）
+
+- 需求（用户提出，三项）：
+  1. 订阅-新建套餐：额度设为 -1 表示该订阅不提供额度；「允许余额兑换」下方新增「允许兑换码兑换」开关。
+  2. 兑换码：「状态」筛选旁新增「分组」筛选，对订阅码与额度码都生效。
+  3. 创建兑换码：「额度」右侧新增「订阅」单选项，可选创建额度码或订阅码。
+
+- 澄清（AskUserQuestion，用户答复）：「分组」为**仅分类标签**，只影响筛选、不影响兑换行为；订阅码在**创建时绑定一个套餐**。
+
+- 语义设计：
+  - `SubscriptionPlan.TotalAmount`：`0` = 不限额度（原语义保留），**`-1` = 该套餐完全不提供额度**。`PreConsumeUserSubscription` 遇到负数总额直接 `continue`，使请求穿透到后续订阅或钱包；配合既有 `ErrorCodeInsufficientUserQuota` → `allow_wallet_overflow` 回退链，用户自动落到钱包余额。
+  - `Redemption` 新增 `group`（分类标签）、`type`（`quota`/`subscription`）、`plan_id`。订阅码兑换时校验套餐存在、启用、且 `AllowRedemptionCode` 为真，随后调用 `CreateUserSubscriptionFromPlanTx(tx, userId, plan, "redemption")` 创建订阅（沿用其 `MaxPurchasePerUser` 与分组升降级逻辑），**不写入钱包额度**。
+  - 兑换码类型创建后不可修改（后端以库中类型为准，前端编辑态禁用单选）。
+
+- 改动文件：
+  - 后端：`model/redemption.go`（字段/`NormalizeRedemptionType`/`GetRedemptionGroups`/`Redeem` 分支/`Insert`/`Update`）、`model/subscription.go`（`AllowRedemptionCode`、`NormalizeDefaults`、负数总额跳过）、`model/db_time.go`（见下）、`controller/{redemption,subscription,user}.go`、`router/api-router.go`（新增 `GET /api/redemption/groups`）、`middleware/access_token_routes.go`（登记新路由规则）、`common/constants.go`、`i18n/keys.go` + 三个 yaml。
+  - 前端：`features/redemption-codes/{types,api,constants,lib/redemption-form}.ts`、`components/{redemptions-columns,redemptions-table,redemptions-mutate-drawer,redemptions-mobile-list}.tsx`、`features/subscriptions/{types,lib/plan-form,lib/index}.ts`、`components/subscriptions-mutate-drawer.tsx`、`features/wallet/{types,hooks/use-redemption}.ts`、7 语言包。
+  - `GET /api/user/topup` 响应 `data` 由裸数字改为 `{type, quota, plan_id, plan_title}`（唯一消费方 `use-redemption.ts` 已同步）。
+
+- **顺带修掉一个真实死锁**：`CreateUserSubscriptionFromPlanTx` 在事务内调用 `GetDBTimestamp()`，而后者走全局 `DB`。当连接池被限制为 1（`SQL_MAX_OPEN_CONNS=1`，model 测试即如此）时，事务占着唯一连接、`GetDBTimestamp` 永远等不到第二个连接 → 整个调用挂死。已把 `GetDBTimestamp` 重构为 `dbTimestamp(db)` 并让该函数传入 `tx`。这是新增订阅兑换路径才暴露出来的存量问题（`AdminBindSubscription` 同样受影响）。
+  - 最初的 `model` 包测试正是在此处挂到 600s 超时才发现。
+
+- 验证：
+  | 检查 | 结果 |
+  | --- | --- |
+  | `go build ./...` / `go vet ./...` / `gofmt -l` | ✅ 干净 |
+  | `go test ./...` | ✅ 仅剩既有问题：`controller` 263 条 Windows `TempDir RemoveAll` 清理失败、`service` 2 个 affinity 存量 flaky（均已用干净 main worktree 对照确认与本次无关） |
+  | 新增后端测试 | ✅ `TestPreConsumeSkipsSubscriptionWithNoQuota`（-1 不扣费、不写预扣记录）、`TestPreConsumeStillUsesUnlimitedPlan`（0 仍为不限）、`TestRedeemSubscriptionCodeCreatesSubscription`、`TestRedeemSubscriptionCodeRejectedByPlanSwitch`（拒绝时事务回滚、兑换码不被消耗）、`TestSearchRedemptionsFiltersByGroup` |
+  | `bun run typecheck` | ✅ |
+  | `bun run build` | ✅ |
+  | `bun run test` | ✅ 174 文件 / 2166 用例全过（新增 5 例；`features/models/__tests__/metadata-editing.test.tsx` 在全量并发下偶发超时，独占运行 3/3 通过，属上游既有抖动） |
+  | `bun run lint` | 169 error / 71 warning，与合并后基线**完全一致**（新增代码零新增告警） |
+  | `bun run i18n:sync` | ✅ 7 语言 missing/extras 全 0；zh/zh-TW 已人工翻译，fr/ja/ru/vi 回退英文 |
+  | 容器重建 + 运行 | ✅ `docker build -f Dockerfile.local` 成功；重启后 `/api/status` `success:true`、`setup:true` |
+  | 迁移落库 | ✅ `redemptions.group/type/plan_id`、`subscription_plans.allow_redemption_code` 均已建列并带正确默认值 |
+  | 新路由 | ✅ `GET /api/redemption/groups` 返回 401（路由存在、需鉴权），非 404 |
+  | 产物校验 | ✅ 容器实际下发的 `index.js` 含 `Redemption Target` / `Allow redemption code redemption` / `Redeeming this code creates the selected subscription` |
+
+- 备注：本次仅本地提交，未推送；`-1` 语义未改动 `0 = 不限额度` 的既有行为。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。

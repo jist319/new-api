@@ -2,7 +2,16 @@
 
 更新：2026-10-06
 
-## 当前任务：容器构建 + 本地运行验证
+## 当前任务：订阅无额度套餐 + 兑换码分组/订阅类型
+
+- 状态：**完成**（dev，本地提交，未推送）
+- 三项需求：①套餐额度 -1 = 不提供额度，且「允许余额兑换」下方新增「允许兑换码兑换」；②兑换码新增「分组」筛选（订阅码与额度码通用）；③创建兑换码新增「额度 / 订阅」单选，订阅码创建时绑定套餐。
+- 关键语义：`SubscriptionPlan.TotalAmount` 保留 `0 = 不限`，新增 **`-1 = 无额度**（`PreConsumeUserSubscription` 跳过负数总额，请求穿透到钱包）；`Redemption` 新增 `group`/`type`/`plan_id`；订阅码兑换走 `CreateUserSubscriptionFromPlanTx(..., "redemption")`，不写钱包。
+- 顺带修掉 `CreateUserSubscriptionFromPlanTx` 在事务内用全局 `DB` 取时间戳导致的死锁（连接池为 1 时挂死），改为 `dbTimestamp(tx)`。见 [[db-timestamp-tx-deadlock]]。
+- 验证：`go build`/`go vet`/`gofmt` ✅；`go test ./...` 仅剩既有 Windows 清理失败与 2 个 affinity flaky；`bun run typecheck`/`build`/`test`（174 文件 / 2166 用例）✅；lint 与基线一致（169/71）；i18n 7 语言 missing/extras 全 0；容器重建后迁移与新路由实测通过。
+- 备注：未推送；`GET /api/user/topup` 的 `data` 由裸数字改为对象。
+
+## 上一任务：容器构建 + 本地运行验证
 
 - 状态：**完成**（dev，本地提交，待推送）
 - 环境：WSL2 装 **Debian 13 (trixie)**（`wsl --install -d Debian --no-launch`，已设默认）；新建 `C:\Users\jist3\.wslconfig` 开 `networkingMode=mirrored` + `autoProxy=true`，解决 NAT 模式够不着 Windows 代理 `127.0.0.1:10808` 的问题；Docker Desktop 4.94.0、daemon 29.8.2。
