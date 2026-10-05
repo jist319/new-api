@@ -6893,6 +6893,18 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Redemption Target": "Redemption Target",
+    "Subscription Plan": "Subscription Plan",
+    "Select a plan": "Select a plan",
+    "Select a subscription plan": "Select a subscription plan",
+    "Optional label for grouping and filtering": "Optional label for grouping and filtering",
+    "Admin-only label used to filter codes. It does not change what the code grants.": "Admin-only label used to filter codes. It does not change what the code grants.",
+    "Top up the wallet with a quota, or grant a subscription plan.": "Top up the wallet with a quota, or grant a subscription plan.",
+    "Redeeming this code creates the selected subscription for the user.": "Redeeming this code creates the selected subscription for the user.",
+    "Plan #{{id}}": "Plan #{{id}}",
+    "Redemption successful! Subscription activated: {{plan}}": "Redemption successful! Subscription activated: {{plan}}",
+    "Allow redemption code redemption": "Allow redemption code redemption",
+    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 means the plan grants no quota and requests fall back to the wallet."
   }
 }

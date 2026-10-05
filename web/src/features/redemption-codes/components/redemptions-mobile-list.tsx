@@ -73,6 +73,7 @@ function RedemptionsMobileSkeleton() {
 interface RedemptionsMobileListProps {
   table: TanstackTable<Redemption>
   isLoading: boolean
+  planTitles?: Record<number, string>
 }
 
 export function RedemptionsMobileList(props: RedemptionsMobileListProps) {
@@ -162,11 +163,25 @@ export function RedemptionsMobileList(props: RedemptionsMobileListProps) {
             </div>
 
             <div className='flex items-center justify-between gap-2 text-xs'>
-              <span className='text-muted-foreground'>{t('Quota')}</span>
-              <span className='font-medium tabular-nums'>
-                {formatQuota(redemption.quota)}
+              <span className='text-muted-foreground'>
+                {redemption.type === 'subscription' ? t('Subscription') : t('Quota')}
+              </span>
+              <span className='truncate font-medium tabular-nums'>
+                {redemption.type === 'subscription'
+                  ? props.planTitles?.[redemption.plan_id] ||
+                    t('Plan #{{id}}', { id: redemption.plan_id })
+                  : formatQuota(redemption.quota)}
               </span>
             </div>
+
+            {redemption.group && (
+              <div className='flex items-center justify-between gap-2 text-xs'>
+                <span className='text-muted-foreground'>{t('Group')}</span>
+                <span className='truncate font-medium'>
+                  {redemption.group}
+                </span>
+              </div>
+            )}
           </div>
         )
       })}

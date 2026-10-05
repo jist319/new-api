@@ -23,17 +23,31 @@ import {
   waitFor,
   type RenderResult,
 } from '@testing-library/react'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import type { Redemption } from '../../types'
+
+// The drawer loads subscription plans for the "subscription" redemption type.
+// These tests cover the quota path, so stub the lookup instead of mocking it
+// through every per-test `api.get` handler.
+vi.mock('@/features/subscriptions/api', () => ({
+  getAdminPlans: async () => ({ success: true, data: [] }),
+}))
 
 const i18n = (await import('i18next')).default
 const { I18nextProvider, initReactI18next } = await import('react-i18next')
 const { Toaster, toast } = await import('sonner')
+const { QueryClient, QueryClientProvider } = await import(
+  '@tanstack/react-query'
+)
 const { api } = await import('@/lib/api')
 const { useSystemConfigStore } = await import('@/stores/system-config-store')
 const { RedemptionsProvider } = await import('../redemptions-provider')
 const { RedemptionsMutateDrawer } = await import('../redemptions-mutate-drawer')
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+})
 
 await i18n.use(initReactI18next).init({
   lng: 'en',
@@ -80,6 +94,9 @@ function redemption(id: number, quota = 500001): Redemption {
     redeemed_time: 0,
     expired_time: 0,
     used_user_id: 0,
+    group: '',
+    type: 'quota',
+    plan_id: 0,
   }
 }
 
@@ -95,16 +112,18 @@ function deferred<T>() {
 
 function drawerTree(currentRow: Redemption) {
   return (
-    <I18nextProvider i18n={i18n}>
-      <RedemptionsProvider>
-        <RedemptionsMutateDrawer
-          open
-          currentRow={currentRow}
-          onOpenChange={() => undefined}
-        />
-      </RedemptionsProvider>
-      <Toaster duration={60_000} />
-    </I18nextProvider>
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18n}>
+        <RedemptionsProvider>
+          <RedemptionsMutateDrawer
+            open
+            currentRow={currentRow}
+            onOpenChange={() => undefined}
+          />
+        </RedemptionsProvider>
+        <Toaster duration={60_000} />
+      </I18nextProvider>
+    </QueryClientProvider>
   )
 }
 

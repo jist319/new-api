@@ -35,7 +35,9 @@ import { isRedemptionExpired, isTimestampExpired } from '../lib'
 import type { Redemption } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
 
-export function useRedemptionsColumns(): ColumnDef<Redemption>[] {
+export function useRedemptionsColumns(
+  planTitles: Record<number, string> = {}
+): ColumnDef<Redemption>[] {
   const { t } = useTranslation()
   return [
     {
@@ -80,6 +82,22 @@ export function useRedemptionsColumns(): ColumnDef<Redemption>[] {
         <span className='font-medium'>{row.getValue('name')}</span>
       ),
       size: 180,
+    },
+    {
+      accessorKey: 'type',
+      header: t('Type'),
+      cell: ({ row }) => {
+        const isSubscription = row.original.type === 'subscription'
+        return (
+          <StatusBadge
+            label={isSubscription ? t('Subscription') : t('Quota')}
+            variant={isSubscription ? 'blue' : 'neutral'}
+            copyable={false}
+            className='-ml-1.5'
+          />
+        )
+      },
+      size: 110,
     },
     {
       accessorKey: 'status',
@@ -133,6 +151,25 @@ export function useRedemptionsColumns(): ColumnDef<Redemption>[] {
       size: 120,
     },
     {
+      accessorKey: 'group',
+      header: t('Group'),
+      cell: ({ row }) => {
+        const group = row.original.group
+        if (!group) {
+          return <span className='text-muted-foreground text-sm'>-</span>
+        }
+        return (
+          <StatusBadge
+            label={group}
+            variant='neutral'
+            copyable={false}
+            className='-ml-1.5'
+          />
+        )
+      },
+      size: 140,
+    },
+    {
       id: 'code',
       accessorKey: 'key',
       header: t('Redemption Code'),
@@ -158,6 +195,18 @@ export function useRedemptionsColumns(): ColumnDef<Redemption>[] {
       accessorKey: 'quota',
       header: t('Quota'),
       cell: ({ row }) => {
+        const redemption = row.original
+        if (redemption.type === 'subscription') {
+          const title = planTitles[redemption.plan_id]
+          return (
+            <StatusBadge
+              label={title || t('Plan #{{id}}', { id: redemption.plan_id })}
+              variant='blue'
+              copyable={false}
+              className='-ml-1.5'
+            />
+          )
+        }
         const quota = row.getValue('quota') as number
         return (
           <StatusBadge

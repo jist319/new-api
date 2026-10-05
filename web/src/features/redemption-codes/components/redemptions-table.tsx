@@ -27,11 +27,12 @@ import {
   DataTablePage,
   useDataTable,
 } from '@/components/data-table'
+import { getAdminPlans } from '@/features/subscriptions/api'
 import { useMediaQuery } from '@/hooks'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { createServerError } from '@/lib/server-error-message'
 
-import { getRedemptions, searchRedemptions } from '../api'
+import { getRedemptionGroups, getRedemptions, searchRedemptions } from '../api'
 import {
   ERROR_MESSAGES,
   REDEMPTION_STATUS,
@@ -55,9 +56,23 @@ function isDisabledRedemptionRow(redemption: Redemption) {
 
 export function RedemptionsTable() {
   const { t } = useTranslation()
-  const columns = useRedemptionsColumns()
   const { refreshTrigger } = useRedemptions()
   const isMobile = useMediaQuery('(max-width: 640px)')
+
+  // Subscription codes show the bound plan's title instead of a quota.
+  const { data: plansData } = useQuery({
+    queryKey: ['admin-subscription-plans'],
+    queryFn: getAdminPlans,
+    placeholderData: (previousData) => previousData,
+  })
+  const planTitles = useMemo(() => {
+    const titles: Record<number, string> = {}
+    for (const record of plansData?.data ?? []) {
+      titles[record.plan.id] = record.plan.title
+    }
+    return titles
+  }, [plansData])
+  const columns = useRedemptionsColumns(planTitles)
 
   const {
     globalFilter,
@@ -72,13 +87,21 @@ export function RedemptionsTable() {
     navigate: route.useNavigate(),
     pagination: { defaultPage: 1, defaultPageSize: isMobile ? 10 : 20 },
     globalFilter: { enabled: true, key: 'filter' },
-    columnFilters: [{ columnId: 'status', searchKey: 'status', type: 'array' }],
+    columnFilters: [
+      { columnId: 'status', searchKey: 'status', type: 'array' },
+      { columnId: 'group', searchKey: 'group', type: 'array' },
+    ],
   })
   const statusFilter =
     (columnFilters.find((filter) => filter.id === 'status')?.value as
       | string[]
       | undefined) ?? []
   const statusFilterValue = statusFilter[0] ?? ''
+  const groupFilter =
+    (columnFilters.find((filter) => filter.id === 'group')?.value as
+      | string[]
+      | undefined) ?? []
+  const groupFilterValue = groupFilter[0] ?? ''
 
   // Fetch data with React Query
   const { data, isLoading, isFetching } = useQuery({
@@ -88,30 +111,33 @@ export function RedemptionsTable() {
       pagination.pageSize,
       globalFilter,
       statusFilterValue,
+      groupFilterValue,
       refreshTrigger,
     ],
     queryFn: async () => {
       const hasFilter = globalFilter?.trim()
       const hasStatusFilter = statusFilterValue !== ''
+      const hasGroupFilter = groupFilterValue !== ''
+      const needsSearch = Boolean(hasFilter) || hasStatusFilter || hasGroupFilter
       const params = {
         p: pagination.pageIndex + 1,
         page_size: pagination.pageSize,
       }
 
-      const result =
-        hasFilter || hasStatusFilter
-          ? await searchRedemptions({
-              ...params,
-              keyword: globalFilter,
-              status: statusFilterValue,
-            })
-          : await getRedemptions(params)
+      const result = needsSearch
+        ? await searchRedemptions({
+            ...params,
+            keyword: globalFilter,
+            status: statusFilterValue,
+            group: groupFilterValue,
+          })
+        : await getRedemptions(params)
 
       if (!result.success) {
         throw createServerError(
           result,
           t(
-            hasFilter || hasStatusFilter
+            needsSearch
               ? ERROR_MESSAGES.SEARCH_FAILED
               : ERROR_MESSAGES.LOAD_FAILED
           )
@@ -123,6 +149,12 @@ export function RedemptionsTable() {
         total: result.data?.total || 0,
       }
     },
+    placeholderData: (previousData) => previousData,
+  })
+
+  const { data: groupsData } = useQuery({
+    queryKey: ['redemption-groups', refreshTrigger],
+    queryFn: getRedemptionGroups,
     placeholderData: (previousData) => previousData,
   })
 
@@ -157,6 +189,15 @@ export function RedemptionsTable() {
     [t]
   )
 
+  const groupOptions = useMemo(
+    () =>
+      (groupsData?.data ?? []).map((group) => ({
+        label: group,
+        value: group,
+      })),
+    [groupsData]
+  )
+
   return (
     <DataTablePage
       table={table}
@@ -179,9 +220,21 @@ export function RedemptionsTable() {
             options: redemptionStatusOptions,
             singleSelect: true,
           },
+          {
+            columnId: 'group',
+            title: t('Group'),
+            options: groupOptions,
+            singleSelect: true,
+          },
         ],
       }}
-      mobile={<RedemptionsMobileList table={table} isLoading={isLoading} />}
+      mobile={
+        <RedemptionsMobileList
+          table={table}
+          isLoading={isLoading}
+          planTitles={planTitles}
+        />
+      }
       getRowClassName={(row, { isMobile }) => {
         if (!isDisabledRedemptionRow(row.original)) return undefined
         return isMobile ? DISABLED_ROW_MOBILE : DISABLED_ROW_DESKTOP

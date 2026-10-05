@@ -24,6 +24,7 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
 
@@ -36,6 +37,15 @@ import {
 import { RedemptionsExportDialog } from '../redemptions-export-dialog'
 import { RedemptionsMutateDrawer } from '../redemptions-mutate-drawer'
 import { RedemptionsProvider } from '../redemptions-provider'
+
+// The drawer loads subscription plans for the "subscription" redemption type.
+vi.mock('@/features/subscriptions/api', () => ({
+  getAdminPlans: async () => ({ success: true, data: [] }),
+}))
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+})
 
 type Download = { filename: string; blob: Blob }
 
@@ -74,9 +84,11 @@ function readDownload(download: Download): Promise<string> {
 function CreateDrawer() {
   const [open, setOpen] = useState(true)
   return (
-    <RedemptionsProvider>
-      <RedemptionsMutateDrawer open={open} onOpenChange={setOpen} />
-    </RedemptionsProvider>
+    <QueryClientProvider client={queryClient}>
+      <RedemptionsProvider>
+        <RedemptionsMutateDrawer open={open} onOpenChange={setOpen} />
+      </RedemptionsProvider>
+    </QueryClientProvider>
   )
 }
 

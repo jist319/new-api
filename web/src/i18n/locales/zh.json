@@ -6893,6 +6893,18 @@
     "Zhipu": "智谱",
     "Zhipu GLM": "智谱GLM",
     "Zhipu V4": "智谱 V4",
-    "Zoom": "缩放"
+    "Zoom": "缩放",
+    "Redemption Target": "兑换类型",
+    "Subscription Plan": "订阅套餐",
+    "Select a plan": "选择套餐",
+    "Select a subscription plan": "请选择订阅套餐",
+    "Optional label for grouping and filtering": "用于分组筛选的可选标签",
+    "Admin-only label used to filter codes. It does not change what the code grants.": "仅管理员可见的标签，用于筛选兑换码，不影响兑换内容。",
+    "Top up the wallet with a quota, or grant a subscription plan.": "向钱包充值额度，或发放一个订阅套餐。",
+    "Redeeming this code creates the selected subscription for the user.": "兑换该兑换码会为用户创建所选套餐的订阅。",
+    "Plan #{{id}}": "套餐 #{{id}}",
+    "Redemption successful! Subscription activated: {{plan}}": "兑换成功！已开通订阅：{{plan}}",
+    "Allow redemption code redemption": "允许兑换码兑换",
+    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 表示该套餐不提供额度，请求将回退到钱包余额。"
   }
 }

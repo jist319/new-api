@@ -22,6 +22,9 @@ import { z } from 'zod'
 // Redemption Schema & Types
 // ============================================================================
 
+export const REDEMPTION_TYPES = ['quota', 'subscription'] as const
+export type RedemptionType = (typeof REDEMPTION_TYPES)[number]
+
 export const redemptionSchema = z.object({
   id: z.number(),
   user_id: z.number(),
@@ -33,6 +36,10 @@ export const redemptionSchema = z.object({
   redeemed_time: z.number(),
   expired_time: z.number(), // 0 for never expires
   used_user_id: z.number(),
+  // Admin-only classification tag; does not affect redemption behaviour.
+  group: z.string().optional().default(''),
+  type: z.string().optional().default('quota'),
+  plan_id: z.number().optional().default(0),
 })
 
 export type Redemption = z.infer<typeof redemptionSchema>
@@ -66,6 +73,7 @@ export interface GetRedemptionsResponse {
 export interface SearchRedemptionsParams {
   keyword?: string
   status?: string
+  group?: string
   p?: number
   page_size?: number
 }
@@ -75,6 +83,9 @@ export interface RedemptionFormData {
   name: string
   quota: number
   expired_time: number
+  group: string
+  type: RedemptionType
+  plan_id: number
   count?: number // Only for create
   status?: number // Only for status update
 }

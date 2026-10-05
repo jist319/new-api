@@ -23,6 +23,13 @@ import { parseQuotaFromDollars, quotaUnitsToDollars } from '@/lib/format'
 
 import type { SubscriptionPlan, PlanPayload } from '../types'
 
+/**
+ * Sentinel total_amount meaning "this plan grants no quota at all". It is stored
+ * verbatim (never converted to/from display currency) so the backend can tell it
+ * apart from 0, which means unlimited.
+ */
+export const NO_QUOTA_PLAN_TOTAL = -1
+
 export function getPlanFormSchema(t: TFunction) {
   return z.object({
     title: z.string().min(1, t('Please enter plan title')),
@@ -42,9 +49,11 @@ export function getPlanFormSchema(t: TFunction) {
     enabled: z.boolean(),
     sort_order: z.coerce.number(),
     allow_balance_pay: z.boolean(),
+    allow_redemption_code: z.boolean(),
     allow_wallet_overflow: z.boolean(),
     max_purchase_per_user: z.coerce.number().min(0),
-    total_amount: z.coerce.number().min(0),
+    // -1 is a sentinel meaning "this plan grants no quota at all".
+    total_amount: z.coerce.number().min(-1),
     upgrade_group: z.string().optional(),
     downgrade_group: z.string().optional(),
     stripe_price_id: z.string().optional(),
@@ -67,6 +76,7 @@ export const PLAN_FORM_DEFAULTS: PlanFormValues = {
   enabled: true,
   sort_order: 0,
   allow_balance_pay: true,
+  allow_redemption_code: true,
   allow_wallet_overflow: true,
   max_purchase_per_user: 0,
   total_amount: 0,
@@ -90,9 +100,13 @@ export function planToFormValues(plan: SubscriptionPlan): PlanFormValues {
     enabled: plan.enabled !== false,
     sort_order: Number(plan.sort_order || 0),
     allow_balance_pay: plan.allow_balance_pay !== false,
+    allow_redemption_code: plan.allow_redemption_code !== false,
     allow_wallet_overflow: plan.allow_wallet_overflow !== false,
     max_purchase_per_user: Number(plan.max_purchase_per_user || 0),
-    total_amount: quotaUnitsToDollars(Number(plan.total_amount || 0)),
+    total_amount:
+      Number(plan.total_amount) === NO_QUOTA_PLAN_TOTAL
+        ? NO_QUOTA_PLAN_TOTAL
+        : quotaUnitsToDollars(Number(plan.total_amount || 0)),
     upgrade_group: plan.upgrade_group || '',
     downgrade_group: plan.downgrade_group || '',
     stripe_price_id: plan.stripe_price_id || '',
@@ -116,7 +130,10 @@ export function formValuesToPlanPayload(values: PlanFormValues): PlanPayload {
           : 0,
       sort_order: Number(values.sort_order || 0),
       max_purchase_per_user: Number(values.max_purchase_per_user || 0),
-      total_amount: parseQuotaFromDollars(Number(values.total_amount || 0)),
+      total_amount:
+        Number(values.total_amount) === NO_QUOTA_PLAN_TOTAL
+          ? NO_QUOTA_PLAN_TOTAL
+          : parseQuotaFromDollars(Number(values.total_amount || 0)),
       upgrade_group: values.upgrade_group || '',
       downgrade_group: values.downgrade_group || '',
     },

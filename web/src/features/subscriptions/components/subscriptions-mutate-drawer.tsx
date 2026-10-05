@@ -75,6 +75,7 @@ import {
 import { getDurationUnitOptions, getResetPeriodOptions } from '../constants'
 import {
   getPlanFormSchema,
+  NO_QUOTA_PLAN_TOTAL,
   PLAN_FORM_DEFAULTS,
   planToFormValues,
   formValuesToPlanPayload,
@@ -370,7 +371,7 @@ export function SubscriptionsMutateDrawer({
                         <Input
                           {...field}
                           type='number'
-                          min={0}
+                          min={NO_QUOTA_PLAN_TOTAL}
                           step={tokensOnly ? 1 : 0.01}
                           placeholder={
                             tokensOnly
@@ -389,6 +390,9 @@ export function SubscriptionsMutateDrawer({
                       <FormDescription>
                         {t(
                           'Total quota included in the plan, usable per billing period. 0 means unlimited.'
+                        )}{' '}
+                        {t(
+                          '-1 means the plan grants no quota and requests fall back to the wallet.'
                         )}
                       </FormDescription>
                       <FormMessage />
@@ -537,6 +541,24 @@ export function SubscriptionsMutateDrawer({
                     <FormItem className={sideDrawerSwitchItemClassName()}>
                       <FormLabel className='!mt-0'>
                         {t('Allow balance redemption')}
+                      </FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='allow_redemption_code'
+                  render={({ field }) => (
+                    <FormItem className={sideDrawerSwitchItemClassName()}>
+                      <FormLabel className='!mt-0'>
+                        {t('Allow redemption code redemption')}
                       </FormLabel>
                       <FormControl>
                         <Switch

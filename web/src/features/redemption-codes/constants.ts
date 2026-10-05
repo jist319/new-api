@@ -92,6 +92,7 @@ export const REDEMPTION_VALIDATION = {
   NAME_MAX_LENGTH: 20,
   COUNT_MIN: 1,
   COUNT_MAX: 100,
+  GROUP_MAX_LENGTH: 64,
 } as const
 
 // ============================================================================
@@ -110,6 +111,7 @@ export const ERROR_MESSAGES = {
   STATUS_UPDATE_FAILED: 'Failed to update redemption code status',
   NAME_LENGTH_INVALID: 'Name must be between {{min}} and {{max}} characters',
   COUNT_INVALID: 'Count must be between {{min}} and {{max}}',
+  GROUP_LENGTH_INVALID: 'Group must be at most {{max}} characters',
   EXPIRED_TIME_INVALID: 'Expired time cannot be earlier than current time',
 } as const
 
@@ -123,6 +125,9 @@ export function getRedemptionFormErrorMessages(t: TFunction) {
     COUNT_INVALID: t(ERROR_MESSAGES.COUNT_INVALID, {
       min: REDEMPTION_VALIDATION.COUNT_MIN,
       max: REDEMPTION_VALIDATION.COUNT_MAX,
+    }),
+    GROUP_LENGTH_INVALID: t(ERROR_MESSAGES.GROUP_LENGTH_INVALID, {
+      max: REDEMPTION_VALIDATION.GROUP_MAX_LENGTH,
     }),
     EXPIRED_TIME_INVALID: t(ERROR_MESSAGES.EXPIRED_TIME_INVALID),
   } as const

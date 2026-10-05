@@ -6893,6 +6893,18 @@
     "Zhipu": "智譜",
     "Zhipu GLM": "智譜GLM",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Redemption Target": "兌換類型",
+    "Subscription Plan": "訂閱套餐",
+    "Select a plan": "選擇套餐",
+    "Select a subscription plan": "請選擇訂閱套餐",
+    "Optional label for grouping and filtering": "用於分組篩選的選用標籤",
+    "Admin-only label used to filter codes. It does not change what the code grants.": "僅管理員可見的標籤，用於篩選兌換碼，不影響兌換內容。",
+    "Top up the wallet with a quota, or grant a subscription plan.": "向錢包儲值額度，或發放一個訂閱套餐。",
+    "Redeeming this code creates the selected subscription for the user.": "兌換該兌換碼會為使用者建立所選套餐的訂閱。",
+    "Plan #{{id}}": "套餐 #{{id}}",
+    "Redemption successful! Subscription activated: {{plan}}": "兌換成功！已開通訂閱：{{plan}}",
+    "Allow redemption code redemption": "允許兌換碼兌換",
+    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 表示該套餐不提供額度，請求將回退到錢包餘額。"
   }
 }
