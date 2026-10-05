@@ -501,6 +501,32 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
   - 唯一落在本次冲突解决文件里的一条：`web/src/features/keys/components/data-table-row-actions.tsx:120 react-hooks(exhaustive-deps)`——`handleOpenCherryStudio` 的依赖数组缺 `apiKey`。已核对：该函数与其依赖数组与 HEAD 逐字相同，非合并引入，是上游收紧规则后暴露的存量问题。**未改动**（加 `apiKey` 会改变回调标识、属行为变更，需单独确认）。
 - 备注：`Dockerfile.local` 仍未跟踪、未提交；Docker 未安装，容器与镜像未重建。
 
+## 容器构建与本地运行（2026-10-06）
+
+- 环境搭建：
+  - WSL2：`wsl --install -d Debian --no-launch`（用 `--no-launch` 避免首次用户创建阻塞），装的 **Debian 13 (trixie)**，已设为默认发行版；用户由用户本人创建。
+  - 新建 `C:\Users\jist3\.wslconfig`（此前不存在）：`networkingMode=mirrored` + `autoProxy=true` + `dnsTunneling=true` + `memory=9GB` + `processors=16`。
+    - 起因：原 NAT 模式下 WSL 报「检测到 localhost 代理配置，但未镜像到 WSL」，而 Windows 侧代理是 `127.0.0.1:10808`，NAT 里够不着 → Docker 拉不了镜像。
+    - 硬件依据：宿主 15.8 GB 内存、32 逻辑核，原默认给 WSL 8 GB / 32 核。
+    - 验证：WSL 内 `127.0.0.1:10808` 的 CONNECT 返回 `HTTP/1.1 200 Connection established` ✅（mirrored 生效，代理可达，无需镜像加速器）
+  - Docker Desktop **4.94.0**，装在 `%LOCALAPPDATA%\Programs\DockerDesktop`（用户级），daemon 29.8.2。
+- 构建：`docker build -f Dockerfile.local -t new-api-dev:local .` → ✅ exit 0，镜像 323 MB。
+  - 容器内跑通了前端 `bun install --frozen-lockfile` + `bun run build`，后端 `go mod download`（goproxy.cn）+ `go build`；**这是 Linux 环境下的完整构建验证**，覆盖了前一条记录里 Windows 本机无法覆盖的部分。
+- 运行：`docker compose -f docker-compose.dev.yml up -d --no-build` → 三容器 Up（`new-api-dev` / `new-api-dev-pg` healthy / `new-api-dev-redis`），端口 3000。
+  - `--no-build` 必须加：该 compose 的 `build:` 指向 `Dockerfile.dev`（仅后端、`web/dist` 是占位页），不加会绕开刚构建的生产镜像。
+- 冒烟验证：
+
+  | 路径 | 结果 |
+  | --- | --- |
+  | `/api/status` | 200，`success:true`、`setup:false`（空库） |
+  | `/api/tutorial-doc` | 200（二开自定义路由） |
+  | `/jistai-logo.png` | 200（品牌资源） |
+  | `/manifest.json` | 200（PWA manifest） |
+  | `/webchat/lobe/` | 302（Lobe Chat 同源代理） |
+
+  `/api/status` 返回体含二开字段 `RedemptionCodeLink`，`chats` 中 CC Switch 条目为 `name=JistAI`；首页 HTML title 为 JistAI、图标全指向 `jistai-logo.png` ✅
+- 备注：库为空，需重新走 4 步初始化向导；`VERSION` 是 0 字节空文件，镜像内版本号为空；`Dockerfile.local` 仍按约定保持未跟踪。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。

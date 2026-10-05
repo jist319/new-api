@@ -2,7 +2,16 @@
 
 更新：2026-10-06
 
-## 当前任务：工具链重装 + 合并后全量构建验证
+## 当前任务：容器构建 + 本地运行验证
+
+- 状态：**完成**（dev，本地提交，待推送）
+- 环境：WSL2 装 **Debian 13 (trixie)**（`wsl --install -d Debian --no-launch`，已设默认）；新建 `C:\Users\jist3\.wslconfig` 开 `networkingMode=mirrored` + `autoProxy=true`，解决 NAT 模式够不着 Windows 代理 `127.0.0.1:10808` 的问题；Docker Desktop 4.94.0、daemon 29.8.2。
+- 构建：`docker build -f Dockerfile.local -t new-api-dev:local .` ✅ 323 MB。容器内跑通前端 `bun install`/`bun run build` + 后端 `go mod download`/`go build` —— Linux 环境的完整构建验证。
+- 运行：`docker compose -f docker-compose.dev.yml up -d --no-build` ✅ 三容器 Up，端口 3000。
+- 冒烟：`/api/status` 200 `success:true`；`/api/tutorial-doc` 200；`/jistai-logo.png` 200；`/manifest.json` 200；`/webchat/lobe/` 302。首页 title=JistAI、`/api/status` 含 `RedemptionCodeLink`、CC Switch 条目 `name=JistAI`。
+- 备注：库为空需重跑初始化向导；`VERSION` 为 0 字节，镜像内版本号为空。
+
+## 上一任务：工具链重装 + 合并后全量构建验证
 
 - 状态：**完成**（dev，本地提交 `70a9fe6ff`、`7b269baf5`，未推送）
 - 工具链：Go 1.27.0（`winget install GoLang.Go`）、Bun 1.4.2（`npm install -g --allow-scripts=bun bun`；npm 11 默认拦截 postinstall）。
