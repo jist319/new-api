@@ -416,7 +416,47 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 - [x] 本地运行：dev 分支镜像 `new-api-dev:local` 构建成功并启动（Postgres/Redis 就绪，端口 3000）
 - [x] 管理员初始化：4 步向导完成（数据库检查 → admin 账号 → 对外运营 → 初始化系统），`/api/status` `setup:true`
 
-## 基线验证矩阵（2026-08-08）
+## 同步：upstream/main 并合并进 dev（2026-10-06）
+
+- 需求：先同步上游 `main`，再合并到 `dev`。
+- 前置障碍：仓库目录自 8-23 起 owner 为 `NT SERVICE\TrustedInstaller`，且带 `Mandatory Label\High Mandatory Level:(OI)(NP)(IO)(NW)`（No-Write-Up）。中完整性进程（含本会话 shell、普通 git）无法在该目录树写入任何文件，`git fetch` 报 `Unable to create temporary file ... Invalid argument`。
+  - 实测：`.`、`.git`、`.git/refs/heads`、`.git/objects/pack` 全部写入 DENIED；父目录 `Documents\`、`Agent\` 正常。
+  - 修复（用户以管理员身份执行）：
+    1. `takeown /F "<repo>" /R /D Y`
+    2. `icacls "<repo>" /reset /T /C`
+    3. `icacls "<repo>" /setintegritylevel (OI)(CI)Medium /T /C`
+       （PowerShell 会误解析 `(OI)(CI)Medium`，需加引号或用 `cmd /c '...'` 包裹）
+- 同步结果：
+  - `upstream/main` `2d8e50bf`（2026-08-21）→ `b48b74ab`（2026-10-05），共 234 个提交
+  - `main` fast-forward 到 `b48b74ab`
+  - `dev` 以 `--no-ff` 合并 `main` → 合并提交 `58aa2e063`；`dev` 领先 `origin/dev` 235 个提交，落后 `main` 0
+- 冲突解决（19 个文件）：
+
+| 文件 | 解决方式 |
+| --- | --- |
+| `middleware/distributor.go` | 采用 main 的 `SelectChannelForRequest` 选择流程；把 `/pg/responses` 分组覆盖块保留在 `if shouldSelectChannel` 内，`usingGroup` 上提到该块开头（main 把它降到了 chat 子块作用域） |
+| `router/web-router.go` | 保留 `/webchat/lobe/*path` 同源代理；采用 main 的 `router.NoRoute(pluginDispatcher, RouteTag("web"), gzip, AccessTokenAudit, GlobalWebRateLimit, Cache, static.Serve, handler)` 中间件链，替换旧的 `router.Use(...)` 写法 |
+| `setting/chat.go` | 保留本地代理 Lobe Chat 预设（`{origin}/webchat/lobe/`），合入 main 新增的 AQBot |
+| `web/index.html` | 保留 JistAI favicon / apple-touch-icon / manifest / apple-mobile-web-app-title |
+| `web/public/favicon.ico` | 维持删除（改用 `jistai-logo.png`） |
+| `web/src/features/system-settings/types.ts` | 保留 `RedemptionCodeLink`；`general_setting.docs_link` 交给 main 迁到 `SiteSettings` |
+| `web/src/features/system-settings/billing/index.tsx` | 同上，保留 `RedemptionCodeLink` 默认值 |
+| `web/src/features/system-settings/general/system-info-section.tsx` | 保留 `TutorialDoc`，合入 main 的 `general_setting.docs_link`（3 处 schema/defaults 均并集） |
+| `web/src/features/keys/components/data-table-row-actions.tsx` | 保留一键配置下拉（`handleOpenCCSwitch` / `handleOpenCherryStudio`）；删除 main 已移除的密钥预取辅助函数 `handleMenuOpenChange` / `getCachedRealKey`（其依赖的 `resolvedRealKey` 已被 main 删除，且在合并结果中无引用） |
+| `web/src/components/layout/components/chat-presets-item.tsx` | 两侧 import 均保留（`openExternalApp` + `handleServerError`） |
+| `web/src/i18n/locales/_reports/_sync-report.json` | 采用 main 的删除（该目录已进 `web/.gitignore`） |
+| `web/src/i18n/locales/{en,zh,zh-TW,fr,ru,ja,vi}.json` | 两侧并集合并（保留原始行文本，避免破坏 `footer.newapi.*` 混淆 key）；zh 的 `Attach`（附件）、`Take screenshot`（截屏）保留自有译法 |
+
+- 验证：
+  - 全仓冲突标记扫描：✅ 清零
+  - `node scripts/sync-i18n.mjs`：✅ 7 语言 missing/extras 均为 0（`_reports/_sync-report.json`）；untranslated 计数 zh=3、fr=9、vi=9、ja=29、ru=29、zh-TW=0（上游新增 key 尚未翻译，回退英文）
+  - 二开功能点存活抽查：✅ `/webchat/lobe`、`/pg/responses`、`actionsChat` 开关、`TutorialDoc`、playground 历史抽屉（`w-1/2` + 500ms `cubic-bezier(0.32,0.72,0,1)`）、JistAI 品牌（footer / DEFAULT_SYSTEM_NAME / index.html）
+  - `go build ./...`、`bun run typecheck`、`bun run build`：❌ **未执行** —— 本机未安装 Go 与 Bun（`where go` / `where bun` 均无结果，仅 node/npm 可用）；Docker 亦不可用，本地容器未重建
+- 备注：`Dockerfile.local` 保持未跟踪，未提交；本次未 push。
+
+## 基线验证矩阵（2026-08-08，工具链变更后已过期）
+
+> 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。
 
 | 检查 | 命令 | 结果 |
 | --- | --- | --- |
