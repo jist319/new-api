@@ -26,6 +26,9 @@ var Chats = []map[string]string{
 		"DeepChat": "deepchat://provider/install?v=1&data={deepchatConfig}",
 	},
 	{
+		"AQBot": "aqbot://providers?{aqbotConfig}",
+	},
+	{
 		"Lobe Chat 官方示例": "{origin}/webchat/lobe/?settings={\"keyVaults\":{\"openai\":{\"apiKey\":\"{key}\",\"baseURL\":\"{origin}/v1\"}}}",
 	},
 	{

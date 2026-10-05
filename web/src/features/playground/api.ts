@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
+import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { API_ENDPOINTS } from './constants'
 import type {
@@ -64,6 +65,7 @@ export async function getUserModels(group: string): Promise<ModelOption[]> {
     params: { group },
   })
   const { data } = res
+  requireServerSuccess(data)
 
   if (!data.success || !Array.isArray(data.data)) {
     return []
@@ -81,6 +83,7 @@ export async function getUserModels(group: string): Promise<ModelOption[]> {
 export async function getUserGroups(): Promise<GroupOption[]> {
   const res = await api.get(API_ENDPOINTS.USER_GROUPS)
   const { data } = res
+  requireServerSuccess(data)
 
   if (!data.success || !data.data) {
     return []
