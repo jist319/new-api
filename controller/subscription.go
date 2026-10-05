@@ -168,6 +168,9 @@ func AdminCreateSubscriptionPlan(c *gin.Context) {
 	if req.Plan.AllowBalancePay == nil {
 		req.Plan.AllowBalancePay = common.GetPointer(true)
 	}
+	if req.Plan.AllowRedemptionCode == nil {
+		req.Plan.AllowRedemptionCode = common.GetPointer(true)
+	}
 	if req.Plan.AllowWalletOverflow == nil {
 		req.Plan.AllowWalletOverflow = common.GetPointer(true)
 	}
@@ -181,8 +184,8 @@ func AdminCreateSubscriptionPlan(c *gin.Context) {
 		common.ApiErrorMsg(c, "购买上限不能为负数")
 		return
 	}
-	if req.Plan.TotalAmount < 0 {
-		common.ApiErrorMsg(c, "总额度不能为负数")
+	if req.Plan.TotalAmount < -1 {
+		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示该套餐不提供任何额度）")
 		return
 	}
 	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)
@@ -255,8 +258,8 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		common.ApiErrorMsg(c, "购买上限不能为负数")
 		return
 	}
-	if req.Plan.TotalAmount < 0 {
-		common.ApiErrorMsg(c, "总额度不能为负数")
+	if req.Plan.TotalAmount < -1 {
+		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示该套餐不提供任何额度）")
 		return
 	}
 	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)
@@ -304,6 +307,9 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		}
 		if req.Plan.AllowBalancePay != nil {
 			updateMap["allow_balance_pay"] = *req.Plan.AllowBalancePay
+		}
+		if req.Plan.AllowRedemptionCode != nil {
+			updateMap["allow_redemption_code"] = *req.Plan.AllowRedemptionCode
 		}
 		if req.Plan.AllowWalletOverflow != nil {
 			updateMap["allow_wallet_overflow"] = *req.Plan.AllowWalletOverflow

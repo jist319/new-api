@@ -88,7 +88,7 @@ func TestSearchRedemptionsFiltersAndPaginates(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rows, total, err := SearchRedemptions(tt.keyword, tt.status, tt.startIdx, tt.num)
+			rows, total, err := SearchRedemptions(tt.keyword, tt.status, "", tt.startIdx, tt.num)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantTotal, total)
 			gotIds := make([]int, 0, len(rows))
@@ -128,9 +128,10 @@ func setupRedeemFixture(t *testing.T, quota int) (userId int, key string) {
 func TestRedeemCreditsQuotaExactlyOnce(t *testing.T) {
 	userId, key := setupRedeemFixture(t, 500)
 
-	quota, err := Redeem(key, userId)
+	result, err := Redeem(key, userId)
 	require.NoError(t, err)
-	assert.Equal(t, 500, quota)
+	assert.Equal(t, common.RedemptionTypeQuota, result.Type)
+	assert.Equal(t, 500, result.Quota)
 
 	var user User
 	require.NoError(t, DB.First(&user, "id = ?", userId).Error)
@@ -207,4 +208,112 @@ func TestRedeemConcurrentSingleSuccess(t *testing.T) {
 	var user User
 	require.NoError(t, DB.First(&user, "id = ?", userId).Error)
 	assert.Equal(t, 300, user.Quota, "quota must be credited exactly once")
+}
+
+func TestSearchRedemptionsFiltersByGroup(t *testing.T) {
+	require.NoError(t, DB.AutoMigrate(&Redemption{}))
+	require.NoError(t, DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&Redemption{}).Error)
+	t.Cleanup(func() {
+		require.NoError(t, DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&Redemption{}).Error)
+	})
+
+	redemptions := []Redemption{
+		{Id: 1, Name: "grouped-a", Key: "00000000000000000000000000000021", Status: common.RedemptionCodeStatusEnabled, Group: "vip"},
+		{Id: 2, Name: "grouped-b", Key: "00000000000000000000000000000022", Status: common.RedemptionCodeStatusEnabled, Group: "vip"},
+		{Id: 3, Name: "grouped-c", Key: "00000000000000000000000000000023", Status: common.RedemptionCodeStatusEnabled, Group: "svip"},
+		{Id: 4, Name: "grouped-d", Key: "00000000000000000000000000000024", Status: common.RedemptionCodeStatusEnabled},
+	}
+	require.NoError(t, DB.Create(&redemptions).Error)
+
+	rows, total, err := SearchRedemptions("", "", "vip", 0, 10)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, rows, 2)
+
+	rows, total, err = SearchRedemptions("", "", "", 0, 10)
+	require.NoError(t, err)
+	assert.Equal(t, int64(4), total)
+	assert.Len(t, rows, 4)
+
+	groups, err := GetRedemptionGroups()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"svip", "vip"}, groups)
+}
+
+// newSubscriptionRedeemFixture creates a user, a plan and a subscription
+// redemption code bound to it.
+func newSubscriptionRedeemFixture(t *testing.T, key string, allowRedemptionCode bool, totalAmount int64) (userId int, planId int) {
+	t.Helper()
+	require.NoError(t, DB.AutoMigrate(&Redemption{}, &SubscriptionPlan{}, &UserSubscription{}))
+	require.NoError(t, DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&Redemption{}).Error)
+	t.Cleanup(func() {
+		require.NoError(t, DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&Redemption{}).Error)
+		DB.Exec("DELETE FROM user_subscriptions")
+		DB.Exec("DELETE FROM subscription_plans")
+		DB.Exec("DELETE FROM users")
+		DB.Exec("DELETE FROM logs")
+	})
+
+	user := &User{Username: "sub-redeem-user", Password: "password", Status: common.UserStatusEnabled, Group: "default"}
+	require.NoError(t, DB.Create(user).Error)
+
+	plan := &SubscriptionPlan{
+		Title:               "redeem-plan-" + key,
+		Enabled:             true,
+		DurationUnit:        SubscriptionDurationMonth,
+		DurationValue:       1,
+		TotalAmount:         totalAmount,
+		AllowRedemptionCode: common.GetPointer(allowRedemptionCode),
+	}
+	require.NoError(t, DB.Create(plan).Error)
+	InvalidateSubscriptionPlanCache(plan.Id)
+
+	code := &Redemption{
+		Name:        "sub-code-" + key,
+		Key:         key,
+		Status:      common.RedemptionCodeStatusEnabled,
+		Type:        common.RedemptionTypeSubscription,
+		PlanId:      plan.Id,
+		CreatedTime: common.GetTimestamp(),
+	}
+	require.NoError(t, code.Insert())
+	return user.Id, plan.Id
+}
+
+func TestRedeemSubscriptionCodeCreatesSubscription(t *testing.T) {
+	userId, planId := newSubscriptionRedeemFixture(t, "10000000000000000000000000000031", true, 1000)
+
+	result, err := Redeem("10000000000000000000000000000031", userId)
+	require.NoError(t, err)
+	assert.Equal(t, common.RedemptionTypeSubscription, result.Type)
+	assert.Equal(t, planId, result.PlanId)
+	assert.NotEmpty(t, result.PlanTitle)
+
+	var subs []UserSubscription
+	require.NoError(t, DB.Where("user_id = ?", userId).Find(&subs).Error)
+	require.Len(t, subs, 1)
+	assert.Equal(t, int64(1000), subs[0].AmountTotal)
+	assert.Equal(t, "active", subs[0].Status)
+	assert.Equal(t, "redemption", subs[0].Source)
+
+	// A subscription code must never credit the wallet.
+	var user User
+	require.NoError(t, DB.First(&user, "id = ?", userId).Error)
+	assert.Zero(t, user.Quota)
+}
+
+func TestRedeemSubscriptionCodeRejectedByPlanSwitch(t *testing.T) {
+	userId, _ := newSubscriptionRedeemFixture(t, "10000000000000000000000000000032", false, 1000)
+
+	_, err := Redeem("10000000000000000000000000000032", userId)
+	require.ErrorIs(t, err, ErrRedeemFailed)
+
+	// The code must survive a rejected redemption.
+	var redemption Redemption
+	require.NoError(t, DB.First(&redemption, "key = ?", "10000000000000000000000000000032").Error)
+	assert.Equal(t, common.RedemptionCodeStatusEnabled, redemption.Status)
+
+	var count int64
+	require.NoError(t, DB.Model(&UserSubscription{}).Where("user_id = ?", userId).Count(&count).Error)
+	assert.Zero(t, count)
 }

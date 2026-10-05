@@ -162,6 +162,9 @@ type SubscriptionPlan struct {
 
 	AllowBalancePay *bool `json:"allow_balance_pay"`
 
+	// Allow redeeming this plan with a subscription redemption code (empty = true)
+	AllowRedemptionCode *bool `json:"allow_redemption_code"`
+
 	// Allow falling back to wallet balance after subscription quota is exhausted (empty = true)
 	AllowWalletOverflow *bool `json:"allow_wallet_overflow"`
 
@@ -178,7 +181,8 @@ type SubscriptionPlan struct {
 	// Downgrade user group on expiry (empty = revert to the group held before purchase)
 	DowngradeGroup string `json:"downgrade_group" gorm:"type:varchar(64);default:''"`
 
-	// Total quota (amount in quota units, 0 = unlimited)
+	// Total quota (amount in quota units). 0 = unlimited, -1 = no quota at all
+	// (the subscription grants nothing and requests fall through to the wallet).
 	TotalAmount int64 `json:"total_amount" gorm:"type:bigint;not null;default:0"`
 
 	// Quota reset period for plan
@@ -204,6 +208,9 @@ func (p *SubscriptionPlan) BeforeUpdate(tx *gorm.DB) error {
 func (p *SubscriptionPlan) NormalizeDefaults() {
 	if p.AllowBalancePay == nil {
 		p.AllowBalancePay = common.GetPointer(true)
+	}
+	if p.AllowRedemptionCode == nil {
+		p.AllowRedemptionCode = common.GetPointer(true)
 	}
 	if p.AllowWalletOverflow == nil {
 		p.AllowWalletOverflow = common.GetPointer(true)
@@ -502,7 +509,7 @@ func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *Subscriptio
 			return nil, errors.New("已达到该套餐购买上限")
 		}
 	}
-	nowUnix := GetDBTimestamp()
+	nowUnix := dbTimestamp(tx)
 	now := time.Unix(nowUnix, 0)
 	endUnix, err := calcPlanEndTime(now, plan)
 	if err != nil {
@@ -1351,6 +1358,11 @@ func PreConsumeUserSubscription(requestId string, userId int, modelName string, 
 				return err
 			}
 			usedBefore := sub.AmountUsed
+			// A negative total means the plan grants no quota at all: skip it so
+			// the request falls through to the next subscription or the wallet.
+			if sub.AmountTotal < 0 {
+				continue
+			}
 			if sub.AmountTotal > 0 {
 				remain := sub.AmountTotal - usedBefore
 				if remain < amount {

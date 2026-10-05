@@ -263,6 +263,12 @@ const (
 	RedemptionCodeStatusUsed     = 3 // also don't use 0
 )
 
+// Redemption code types
+const (
+	RedemptionTypeQuota        = "quota"        // 兑换后向钱包充值额度
+	RedemptionTypeSubscription = "subscription" // 兑换后按绑定的套餐创建订阅
+)
+
 const (
 	ChannelStatusUnknown          = 0
 	ChannelStatusEnabled          = 1 // don't use 0, 0 is the default value!
