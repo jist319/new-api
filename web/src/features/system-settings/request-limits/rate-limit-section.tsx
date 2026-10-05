@@ -45,6 +45,7 @@ import {
 import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
+import { GroupConcurrencyVisualEditor } from './concurrency-limit-visual-editor'
 import { RateLimitVisualEditor } from './rate-limit-visual-editor'
 
 const isValidJSON = (value: string | undefined) => {
@@ -66,6 +67,23 @@ const isValidJSON = (value: string | undefined) => {
   }
 }
 
+const isValidConcurrencyJSON = (value: string | undefined) => {
+  if (!value || value.trim() === '') return true
+  try {
+    const parsed = JSON.parse(value)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return false
+    }
+    for (const limit of Object.values(parsed)) {
+      if (typeof limit !== 'number') return false
+      if (!Number.isInteger(limit) || limit < 0 || limit > 100000) return false
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
 const createRateLimitSchema = (t: (key: string) => string) =>
   z.object({
     ModelRequestRateLimitEnabled: z.boolean(),
@@ -76,6 +94,13 @@ const createRateLimitSchema = (t: (key: string) => string) =>
       .string()
       .optional()
       .refine(isValidJSON, {
+        message: t('Invalid JSON format or values out of allowed range'),
+      }),
+    GroupConcurrencyQueueTimeoutSeconds: z.number().min(0).max(86400),
+    GroupConcurrencyLimit: z
+      .string()
+      .optional()
+      .refine(isValidConcurrencyJSON, {
         message: t('Invalid JSON format or values out of allowed range'),
       }),
   })
@@ -90,6 +115,8 @@ export function RateLimitSection({ defaultValues }: RateLimitSectionProps) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
   const [useVisualEditor, setUseVisualEditor] = useState(true)
+  const [useVisualConcurrencyEditor, setUseVisualConcurrencyEditor] =
+    useState(true)
 
   const rateLimitSchema = createRateLimitSchema(t)
 
@@ -161,7 +188,7 @@ export function RateLimitSection({ defaultValues }: RateLimitSectionProps) {
                         step={1}
                         {...field}
                         onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
+                          field.onChange(Number.parseInt(e.target.value) || 0)
                         }
                       />
                       <span className='text-muted-foreground text-sm'>
@@ -192,7 +219,7 @@ export function RateLimitSection({ defaultValues }: RateLimitSectionProps) {
                         step={1}
                         {...field}
                         onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
+                          field.onChange(Number.parseInt(e.target.value) || 0)
                         }
                       />
                       <span className='text-muted-foreground text-sm'>
@@ -223,7 +250,7 @@ export function RateLimitSection({ defaultValues }: RateLimitSectionProps) {
                         step={1}
                         {...field}
                         onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 1)
+                          field.onChange(Number.parseInt(e.target.value) || 1)
                         }
                       />
                       <span className='text-muted-foreground text-sm'>
@@ -313,6 +340,113 @@ export function RateLimitSection({ defaultValues }: RateLimitSectionProps) {
                     </div>
                   </FormDescription>
                 )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='GroupConcurrencyLimit'
+            render={({ field }) => (
+              <FormItem>
+                <div className='flex items-center justify-between'>
+                  <FormLabel>{t('Group concurrency limits')}</FormLabel>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      setUseVisualConcurrencyEditor(!useVisualConcurrencyEditor)
+                    }
+                  >
+                    {useVisualConcurrencyEditor ? (
+                      <>
+                        <Code2 className='mr-2 h-4 w-4' />
+                        {t('JSON Mode')}
+                      </>
+                    ) : (
+                      <>
+                        <Palette className='mr-2 h-4 w-4' />
+                        {t('Visual Mode')}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <FormControl>
+                  {useVisualConcurrencyEditor ? (
+                    <GroupConcurrencyVisualEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                    />
+                  ) : (
+                    <JsonCodeEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      textareaRef={field.ref}
+                      placeholder={`{\n  "default": 3,\n  "vip": 10\n}`}
+                      aria-invalid={Boolean(
+                        form.formState.errors.GroupConcurrencyLimit
+                      )}
+                    />
+                  )}
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Per-user concurrency cap for each group, counting requests still in flight and tasks that have not finished. Groups not listed are unlimited.'
+                  )}
+                </FormDescription>
+                {!useVisualConcurrencyEditor && (
+                  <FormDescription>
+                    <div className='space-y-1 text-xs'>
+                      <p className='font-semibold'>{t('Format:')}</p>
+                      <ul className='list-inside list-disc space-y-0.5 pl-2'>
+                        <li>
+                          {t('JSON object:')} {`{"groupName": maxConcurrency}`}
+                        </li>
+                        <li>
+                          {t('Example:')} {`{"default": 3, "vip": 10}`}
+                        </li>
+                        <li>{t('0 or an omitted group means unlimited')}</li>
+                      </ul>
+                    </div>
+                  </FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='GroupConcurrencyQueueTimeoutSeconds'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Concurrency queue wait')}</FormLabel>
+                <FormControl>
+                  <div className='flex items-center gap-2'>
+                    <Input
+                      type='number'
+                      min={0}
+                      max={86400}
+                      step={1}
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(Number.parseInt(e.target.value) || 0)
+                      }
+                    />
+                    <span className='text-muted-foreground text-sm'>
+                      {t('seconds')}
+                    </span>
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'How long a request over the concurrency limit waits for a free slot before returning 429. 0 rejects immediately.'
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -6906,6 +6906,18 @@
     "Allow redemption code redemption": "允許兌換碼兌換",
     "No quota": "不提供額度",
     "Total quota included in the plan, usable per billing period.": "套餐包含的總額度，按計費週期可用。",
-    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 表示不限量；0 表示該套餐不提供額度，請求將回退到錢包餘額。"
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 表示不限量；0 表示該套餐不提供額度，請求將回退到錢包餘額。",
+    "Group concurrency limits": "分組並行限制",
+    "Per-user concurrency cap for each group, counting requests still in flight and tasks that have not finished. Groups not listed are unlimited.": "每個分組下單一使用者的最大並行：計入進行中的請求和尚未完成的任務。未列出的分組不限制。",
+    "0 or an omitted group means unlimited": "0 或未列出的分組表示不限制",
+    "Concurrency queue wait": "並行排隊等待",
+    "How long a request over the concurrency limit waits for a free slot before returning 429. 0 rejects immediately.": "超出並行限制的請求在回傳 429 前等待空閒槽位的最長時間。0 表示立即拒絕。",
+    "Max Concurrency Per User": "每使用者最大並行",
+    "Requests one user may run at the same time in this group, counting unfinished tasks. 0 = unlimited.": "該分組下單一使用者可同時進行的請求數，含未完成的任務。0 表示不限制。",
+    "Add group concurrency limit": "新增分組並行限制",
+    "Edit group concurrency limit": "編輯分組並行限制",
+    "Cap how many requests one user may run at the same time in a group.": "限制單一使用者在某個分組下可同時進行的請求數。",
+    "No group concurrency limits configured. Click \"Add group\" to get started.": "尚未設定分組並行限制。點擊「新增分組」開始。",
+    "requests": "個"
   }
 }

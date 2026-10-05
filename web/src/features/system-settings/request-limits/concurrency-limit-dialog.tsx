@@ -35,58 +35,46 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 
-const rateLimitDialogSchema = z.object({
+const concurrencyDialogSchema = z.object({
   groupName: z.string().min(1, 'Group name is required'),
-  maxRequests: z
-    .number()
-    .min(0, 'Must be ≥ 0')
-    .max(2147483647, 'Must be ≤ 2,147,483,647'),
-  maxSuccess: z
-    .number()
-    .min(1, 'Must be ≥ 1')
-    .max(2147483647, 'Must be ≤ 2,147,483,647'),
   maxConcurrency: z
     .number()
     .min(0, 'Must be ≥ 0')
     .max(100000, 'Must be ≤ 100,000'),
 })
 
-type RateLimitDialogFormValues = z.infer<typeof rateLimitDialogSchema>
+type ConcurrencyDialogFormValues = z.infer<typeof concurrencyDialogSchema>
 
-const RATE_LIMIT_FORM_ID = 'rate-limit-form'
+const CONCURRENCY_FORM_ID = 'group-concurrency-form'
 
-export type RateLimitEntryData = {
+export type GroupConcurrencyEntryData = {
   groupName: string
-  maxRequests: number
-  maxSuccess: number
   maxConcurrency: number
 }
 
-const EMPTY_ENTRY: RateLimitEntryData = {
+const EMPTY_ENTRY: GroupConcurrencyEntryData = {
   groupName: '',
-  maxRequests: 0,
-  maxSuccess: 1,
-  maxConcurrency: 0,
+  maxConcurrency: 1,
 }
 
-type RateLimitDialogProps = {
+type GroupConcurrencyDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (data: RateLimitEntryData) => void
-  editData?: RateLimitEntryData | null
+  onSave: (data: GroupConcurrencyEntryData) => void
+  editData?: GroupConcurrencyEntryData | null
 }
 
-export function RateLimitDialog({
+export function GroupConcurrencyDialog({
   open,
   onOpenChange,
   onSave,
   editData,
-}: RateLimitDialogProps) {
+}: GroupConcurrencyDialogProps) {
   const { t } = useTranslation()
   const isEditMode = !!editData
 
-  const form = useForm<RateLimitDialogFormValues>({
-    resolver: zodResolver(rateLimitDialogSchema),
+  const form = useForm<ConcurrencyDialogFormValues>({
+    resolver: zodResolver(concurrencyDialogSchema),
     defaultValues: EMPTY_ENTRY,
   })
 
@@ -94,7 +82,7 @@ export function RateLimitDialog({
     form.reset(editData ?? EMPTY_ENTRY)
   }, [editData, form, open])
 
-  const handleSubmit = (values: RateLimitDialogFormValues) => {
+  const handleSubmit = (values: ConcurrencyDialogFormValues) => {
     onSave(values)
     form.reset()
     onOpenChange(false)
@@ -105,10 +93,12 @@ export function RateLimitDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={
-        isEditMode ? t('Edit group rate limit') : t('Add group rate limit')
+        isEditMode
+          ? t('Edit group concurrency limit')
+          : t('Add group concurrency limit')
       }
       description={t(
-        'Configure rate limiting rules for a specific user group.'
+        'Cap how many requests one user may run at the same time in a group.'
       )}
       contentClassName='sm:max-w-[500px]'
       contentHeight='auto'
@@ -122,7 +112,7 @@ export function RateLimitDialog({
           >
             {t('Cancel')}
           </Button>
-          <Button type='submit' form={RATE_LIMIT_FORM_ID}>
+          <Button type='submit' form={CONCURRENCY_FORM_ID}>
             {isEditMode ? t('Update') : t('Add')}
           </Button>
         </>
@@ -130,7 +120,7 @@ export function RateLimitDialog({
     >
       <Form {...form}>
         <form
-          id={RATE_LIMIT_FORM_ID}
+          id={CONCURRENCY_FORM_ID}
           onSubmit={form.handleSubmit(handleSubmit)}
           className='space-y-4'
         >
@@ -151,68 +141,6 @@ export function RateLimitDialog({
                   {isEditMode
                     ? t('Group name cannot be changed when editing.')
                     : t('Unique identifier for this group.')}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='maxRequests'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Max Requests (including failures)')}</FormLabel>
-                <FormControl>
-                  <div className='flex items-center gap-2'>
-                    <Input
-                      type='number'
-                      min={0}
-                      max={2147483647}
-                      step={1}
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(Number.parseInt(e.target.value) || 0)
-                      }
-                    />
-                    <span className='text-muted-foreground text-sm'>
-                      {t('times')}
-                    </span>
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  {t('Total requests allowed per period. 0 = unlimited.')}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='maxSuccess'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Max Successful Requests')}</FormLabel>
-                <FormControl>
-                  <div className='flex items-center gap-2'>
-                    <Input
-                      type='number'
-                      min={1}
-                      max={2147483647}
-                      step={1}
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(Number.parseInt(e.target.value) || 1)
-                      }
-                    />
-                    <span className='text-muted-foreground text-sm'>
-                      {t('times')}
-                    </span>
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  {t('Only successful requests count toward this limit.')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

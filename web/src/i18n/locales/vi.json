@@ -6906,6 +6906,18 @@
     "Allow redemption code redemption": "Allow redemption code redemption",
     "No quota": "No quota",
     "Total quota included in the plan, usable per billing period.": "Total quota included in the plan, usable per billing period.",
-    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet."
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.",
+    "Group concurrency limits": "Group concurrency limits",
+    "Per-user concurrency cap for each group, counting requests still in flight and tasks that have not finished. Groups not listed are unlimited.": "Per-user concurrency cap for each group, counting requests still in flight and tasks that have not finished. Groups not listed are unlimited.",
+    "0 or an omitted group means unlimited": "0 or an omitted group means unlimited",
+    "Concurrency queue wait": "Concurrency queue wait",
+    "How long a request over the concurrency limit waits for a free slot before returning 429. 0 rejects immediately.": "How long a request over the concurrency limit waits for a free slot before returning 429. 0 rejects immediately.",
+    "Max Concurrency Per User": "Max Concurrency Per User",
+    "Requests one user may run at the same time in this group, counting unfinished tasks. 0 = unlimited.": "Requests one user may run at the same time in this group, counting unfinished tasks. 0 = unlimited.",
+    "Add group concurrency limit": "Add group concurrency limit",
+    "Edit group concurrency limit": "Edit group concurrency limit",
+    "Cap how many requests one user may run at the same time in a group.": "Cap how many requests one user may run at the same time in a group.",
+    "No group concurrency limits configured. Click \"Add group\" to get started.": "No group concurrency limits configured. Click \"Add group\" to get started.",
+    "requests": "requests"
   }
 }
