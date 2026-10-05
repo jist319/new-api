@@ -463,6 +463,44 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
   - `01217e350..ec4f32b38  dev -> dev`（236 个提交，含本次合并）
 - 验证：`git ls-remote origin refs/heads/main refs/heads/dev` 与本地 `main`/`dev` SHA 完全一致 ✅
 
+## 构建验证：工具链重装 + 全量构建测试（2026-10-06）
+
+- 背景：本机无 Go/Bun（上一条记录），合并结果未过编译器，故重装后全量验证。
+- 工具链安装：
+  - Go **1.27.0** —— `winget install --id GoLang.Go -e --accept-source-agreements --accept-package-agreements`（装到 `C:\Program Files\Go`）
+  - Bun **1.4.2** —— `npm install -g bun` 会被 npm 11 拦下 postinstall（`bun@1.4.2 (postinstall: node install.js)`），必须改用 `npm install -g --allow-scripts=bun bun`，否则只是个空壳包装
+  - `GOPROXY=https://goproxy.cn,direct`
+- 通过项：
+  | 检查 | 命令 | 结果 |
+  | --- | --- | --- |
+  | go build | `go build ./...` | ✅ exit 0 |
+  | go vet | `go vet ./...` | ✅ exit 0 |
+  | relaykit 独立构建 | `cd relaykit && GOWORK=off go build ./...` | ✅ exit 0 |
+  | bun install | `bun install` | ✅ 91 包 |
+  | typecheck | `bun run typecheck` | ✅ exit 0 |
+  | build | `bun run build` | ✅ exit 0（dist 66.2 MB；修 favicon 后） |
+  | 前端测试 | `bun run test` | ✅ 173 文件 / 2161 用例全过 |
+- **修复 1（合并引入的真实回归）：`TestAccessTokenRouteRulesCoverEveryDashboardRoute` 失败**
+  - 上游新增该测试，要求每个 `/api`、`/pg` 路由必须恰好声明一次访问令牌规则（或在 `accessTokenExemptRoutes` 中）。二开新增的两个路由未登记：
+    - `GET /api/tutorial-doc` → 加入 `router/access_token_scope_test.go` 的豁免清单（与 `/api/notice`、`/api/about` 同类匿名内容页）
+    - `POST /pg/responses` → 在 `middleware/access_token_routes.go` 登记为 `accessTokenSessionRule`（对齐 `/pg/chat/completions`）
+  - 提交 `7b269baf5`；修复后 `go test ./router/...` ✅，全量跑 0 处 route-coverage 报错。
+- **修复 2（合并后前端构建直接失败）：rsbuild favicon**
+  - `bun run build` 报 `Failed to read the favicon file at web/public/favicon.ico`。该文件在 `14f023b4` 已按品牌需要删除、图标改由 `index.html` 声明，但 `html.favicon` 仍指向它。移除该配置项，提交 `70a9fe6ff`。
+  - 验证：`dist/index.html` 仍含全部 JistAI 图标链接（`jistai-logo.png` ×3、`apple-touch-icon`、`manifest.json`、`apple-mobile-web-app-title`），`dist/jistai-logo.png`、`dist/manifest.json` 均已产出 ✅
+- **未通过项（已确认非本次合并引入）**：用 `git worktree add --detach <tmp> main` 拉出干净 upstream 工作区做对照，逐项复现：
+
+  | 现象 | dev | main（对照） | 结论 |
+  | --- | --- | --- | --- |
+  | `controller` 包 263 条 `TempDir RemoveAll cleanup: unlinkat ...audit.db: The process cannot access the file` | 必现 | **同样必现** | Windows 上 Go 的 TempDir 清理无法删除仍被 SQLite 占用的文件；上游 CI 跑 Linux，属环境问题，非代码缺陷 |
+  | `relay/channel` `TestUpstreamGetBody_HTTP2*` | 6 次跑 2 次失败 | **6 次跑 4 次失败** | 上游 flaky（h2c prior-knowledge + Windows loopback），两边都抖 |
+  | `service` `TestObserveChannelAffinityUsageCacheByRelayFormat_*` | 失败 | **同样失败** | 即 D008 记录的存量 flaky，隔离跑亦复现 |
+
+  说明：首次在 main 上跑 HTTP2 用例曾 3/3 通过，扩大到 6 次后才暴露同样抖动，已按 6 次结果更正。
+- **lint 仍失败**：`bun run lint` → 240 条（169 error / 71 warning）。绝大多数是上游存量：上游新增了 `.oxlintrc` 规则与 intl-locale 插件，把既有代码里的问题也一并扫了出来（此前记录的「约 20+ 处」是旧规则集下的数字）。
+  - 唯一落在本次冲突解决文件里的一条：`web/src/features/keys/components/data-table-row-actions.tsx:120 react-hooks(exhaustive-deps)`——`handleOpenCherryStudio` 的依赖数组缺 `apiKey`。已核对：该函数与其依赖数组与 HEAD 逐字相同，非合并引入，是上游收紧规则后暴露的存量问题。**未改动**（加 `apiKey` 会改变回调标识、属行为变更，需单独确认）。
+- 备注：`Dockerfile.local` 仍未跟踪、未提交；Docker 未安装，容器与镜像未重建。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。

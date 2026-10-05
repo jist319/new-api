@@ -2,7 +2,20 @@
 
 更新：2026-10-06
 
-## 当前任务：同步 upstream/main 并合并进 dev
+## 当前任务：工具链重装 + 合并后全量构建验证
+
+- 状态：**完成**（dev，本地提交 `70a9fe6ff`、`7b269baf5`，未推送）
+- 工具链：Go 1.27.0（`winget install GoLang.Go`）、Bun 1.4.2（`npm install -g --allow-scripts=bun bun`；npm 11 默认拦截 postinstall）。
+- 通过：`go build ./...`、`go vet ./...`、`cd relaykit && GOWORK=off go build ./...`、`bun install`、`bun run typecheck`、`bun run build`（66.2 MB）、`bun run test`（173 文件 / 2161 用例全过）。
+- 修掉两个合并引入的问题：
+  1. `POST /pg/responses`、`GET /api/tutorial-doc` 未登记访问令牌路由规则 → 上游新测试 `TestAccessTokenRouteRulesCoverEveryDashboardRoute` 失败。已分别登记为 `accessTokenSessionRule` 与加入豁免清单。
+  2. `bun run build` 因 `rsbuild.config.ts` 的 `html.favicon` 指向已删除的 `public/favicon.ico` 而失败。已移除该配置项，`dist/index.html` 仍带全部 JistAI 图标链接。
+- 未通过（用 `git worktree` 拉干净 main 做对照，确认与本次合并无关）：`controller` 包 263 条 Windows `TempDir RemoveAll` 清理失败、`relay/channel` HTTP2 用例在 dev/main 两边都抖、`service` 两个 affinity 存量 flaky（D008）。
+- lint 仍失败：240 条（169 error），上游收紧 `.oxlintrc` 规则后暴露的存量问题；唯一落在冲突文件里的一条 `data-table-row-actions.tsx:120 exhaustive-deps` 与 HEAD 逐字相同，未改动。
+- 备注：`Dockerfile.local` 未跟踪未提交；Docker 未装，容器未重建。
+  [[upstream-sync-conflict-policy]]
+
+## 上一任务：同步 upstream/main 并合并进 dev
 
 - 状态：**完成**（dev，本地提交 `58aa2e063`，未推送）
 - 前置：本机仓库目录继承自 8-23 的一次提权操作，owner 为 `NT SERVICE\TrustedInstaller` 且带 `Mandatory Label\High Mandatory Level:(OI)(NP)(IO)(NW)`，中完整性进程无法写入 → git fetch/merge 全部失败。已由用户在管理员 PowerShell 执行 `takeown /F <repo> /R /D Y`、`icacls <repo> /reset /T /C`、`icacls <repo> /setintegritylevel (OI)(CI)Medium /T /C` 修复。
