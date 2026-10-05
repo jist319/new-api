@@ -9,7 +9,7 @@ import (
 )
 
 // seedSubscriptionWithTotal creates a user with one active subscription whose
-// plan grants totalAmount quota units (-1 = no quota, 0 = unlimited).
+// plan grants totalAmount quota units (0 = no quota, -1 = unlimited).
 func seedSubscriptionWithTotal(t *testing.T, totalAmount int64) (userId int, subId int) {
 	t.Helper()
 	truncateTables(t)
@@ -42,10 +42,10 @@ func seedSubscriptionWithTotal(t *testing.T, totalAmount int64) (userId int, sub
 	return user.Id, sub.Id
 }
 
-// A negative total means the plan grants nothing: the request must fall through
+// A zero total means the plan grants nothing: the request must fall through
 // rather than consume quota, so the wallet fallback can take over.
 func TestPreConsumeSkipsSubscriptionWithNoQuota(t *testing.T) {
-	userId, subId := seedSubscriptionWithTotal(t, -1)
+	userId, subId := seedSubscriptionWithTotal(t, 0)
 
 	_, err := PreConsumeUserSubscription("req-no-quota", userId, "test-model", 0, 100)
 	require.Error(t, err)
@@ -59,9 +59,9 @@ func TestPreConsumeSkipsSubscriptionWithNoQuota(t *testing.T) {
 	assert.Zero(t, records, "no pre-consume record may be written for a skipped subscription")
 }
 
-// Zero still means unlimited; the no-quota sentinel must not swallow it.
+// A negative total means unlimited; the no-quota sentinel must not swallow it.
 func TestPreConsumeStillUsesUnlimitedPlan(t *testing.T) {
-	userId, subId := seedSubscriptionWithTotal(t, 0)
+	userId, subId := seedSubscriptionWithTotal(t, -1)
 
 	_, err := PreConsumeUserSubscription("req-unlimited", userId, "test-model", 0, 100)
 	require.NoError(t, err)

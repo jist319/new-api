@@ -75,7 +75,7 @@ import {
 import { getDurationUnitOptions, getResetPeriodOptions } from '../constants'
 import {
   getPlanFormSchema,
-  NO_QUOTA_PLAN_TOTAL,
+  UNLIMITED_PLAN_TOTAL,
   PLAN_FORM_DEFAULTS,
   planToFormValues,
   formValuesToPlanPayload,
@@ -371,7 +371,7 @@ export function SubscriptionsMutateDrawer({
                         <Input
                           {...field}
                           type='number'
-                          min={NO_QUOTA_PLAN_TOTAL}
+                          min={UNLIMITED_PLAN_TOTAL}
                           step={tokensOnly ? 1 : 0.01}
                           placeholder={
                             tokensOnly
@@ -389,10 +389,10 @@ export function SubscriptionsMutateDrawer({
                       </FormControl>
                       <FormDescription>
                         {t(
-                          'Total quota included in the plan, usable per billing period. 0 means unlimited.'
+                          'Total quota included in the plan, usable per billing period.'
                         )}{' '}
                         {t(
-                          '-1 means the plan grants no quota and requests fall back to the wallet.'
+                          '-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.'
                         )}
                       </FormDescription>
                       <FormMessage />

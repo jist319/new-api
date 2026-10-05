@@ -181,7 +181,7 @@ type SubscriptionPlan struct {
 	// Downgrade user group on expiry (empty = revert to the group held before purchase)
 	DowngradeGroup string `json:"downgrade_group" gorm:"type:varchar(64);default:''"`
 
-	// Total quota (amount in quota units). 0 = unlimited, -1 = no quota at all
+	// Total quota (amount in quota units). -1 = unlimited, 0 = no quota at all
 	// (the subscription grants nothing and requests fall through to the wallet).
 	TotalAmount int64 `json:"total_amount" gorm:"type:bigint;not null;default:0"`
 
@@ -1358,9 +1358,10 @@ func PreConsumeUserSubscription(requestId string, userId int, modelName string, 
 				return err
 			}
 			usedBefore := sub.AmountUsed
-			// A negative total means the plan grants no quota at all: skip it so
-			// the request falls through to the next subscription or the wallet.
-			if sub.AmountTotal < 0 {
+			// A zero total means the plan grants no quota at all: skip it so the
+			// request falls through to the next subscription or the wallet. A
+			// negative total means unlimited and passes the check below.
+			if sub.AmountTotal == 0 {
 				continue
 			}
 			if sub.AmountTotal > 0 {

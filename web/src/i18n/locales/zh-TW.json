@@ -6203,7 +6203,6 @@
     "Total invitation revenue": "總邀請收入",
     "Total Log Size": "日誌總大小",
     "Total Quota": "總額度",
-    "Total quota included in the plan, usable per billing period. 0 means unlimited.": "套餐包含的總額度，每個收費周期可用；0 表示不限量",
     "Total requests allowed per period. 0 = unlimited.": "每周期允許的總請求數。0 = 無限制。",
     "Total requests made": "總請求數",
     "Total Revenue": "累計收益",
@@ -6905,6 +6904,8 @@
     "Plan #{{id}}": "套餐 #{{id}}",
     "Redemption successful! Subscription activated: {{plan}}": "兌換成功！已開通訂閱：{{plan}}",
     "Allow redemption code redemption": "允許兌換碼兌換",
-    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 表示該套餐不提供額度，請求將回退到錢包餘額。"
+    "No quota": "不提供額度",
+    "Total quota included in the plan, usable per billing period.": "套餐包含的總額度，按計費週期可用。",
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 表示不限量；0 表示該套餐不提供額度，請求將回退到錢包餘額。"
   }
 }

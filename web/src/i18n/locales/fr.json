@@ -6203,7 +6203,6 @@
     "Total invitation revenue": "Revenu total des invitations",
     "Total Log Size": "Taille totale des journaux",
     "Total Quota": "Quota total",
-    "Total quota included in the plan, usable per billing period. 0 means unlimited.": "Quota total inclus dans le forfait, utilisable par période de facturation. 0 signifie illimité.",
     "Total requests allowed per period. 0 = unlimited.": "Total des requêtes autorisées par période. 0 = illimité.",
     "Total requests made": "Requêtes totales effectuées",
     "Total Revenue": "Revenus cumulés",
@@ -6905,6 +6904,8 @@
     "Plan #{{id}}": "Plan #{{id}}",
     "Redemption successful! Subscription activated: {{plan}}": "Redemption successful! Subscription activated: {{plan}}",
     "Allow redemption code redemption": "Allow redemption code redemption",
-    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 means the plan grants no quota and requests fall back to the wallet."
+    "No quota": "No quota",
+    "Total quota included in the plan, usable per billing period.": "Total quota included in the plan, usable per billing period.",
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet."
   }
 }

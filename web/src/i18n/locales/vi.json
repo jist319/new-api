@@ -6203,7 +6203,6 @@
     "Total invitation revenue": "Tổng doanh thu mời",
     "Total Log Size": "Tổng dung lượng nhật ký",
     "Total Quota": "Tổng hạn mức",
-    "Total quota included in the plan, usable per billing period. 0 means unlimited.": "Tổng hạn ngạch bao gồm trong gói, dùng được mỗi kỳ thanh toán. 0 nghĩa là không giới hạn.",
     "Total requests allowed per period. 0 = unlimited.": "Tổng số yêu cầu được phép mỗi kỳ. 0 = không giới hạn.",
     "Total requests made": "Tổng lượt yêu cầu",
     "Total Revenue": "Tổng thu nhập",
@@ -6905,6 +6904,8 @@
     "Plan #{{id}}": "Plan #{{id}}",
     "Redemption successful! Subscription activated: {{plan}}": "Redemption successful! Subscription activated: {{plan}}",
     "Allow redemption code redemption": "Allow redemption code redemption",
-    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 means the plan grants no quota and requests fall back to the wallet."
+    "No quota": "No quota",
+    "Total quota included in the plan, usable per billing period.": "Total quota included in the plan, usable per billing period.",
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet."
   }
 }

@@ -6203,7 +6203,6 @@
     "Total invitation revenue": "招待による総収益",
     "Total Log Size": "ログ合計サイズ",
     "Total Quota": "合計クォータ",
-    "Total quota included in the plan, usable per billing period. 0 means unlimited.": "プランに含まれる合計クォータ。請求期間ごとに使用可能。0 は無制限を意味します。",
     "Total requests allowed per period. 0 = unlimited.": "期間ごとに許可されるリクエストの総数。0 = 無制限。",
     "Total requests made": "合計リクエスト数",
     "Total Revenue": "累計収益",
@@ -6905,6 +6904,8 @@
     "Plan #{{id}}": "Plan #{{id}}",
     "Redemption successful! Subscription activated: {{plan}}": "Redemption successful! Subscription activated: {{plan}}",
     "Allow redemption code redemption": "Allow redemption code redemption",
-    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 means the plan grants no quota and requests fall back to the wallet."
+    "No quota": "No quota",
+    "Total quota included in the plan, usable per billing period.": "Total quota included in the plan, usable per billing period.",
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet."
   }
 }

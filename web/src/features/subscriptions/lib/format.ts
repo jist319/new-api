@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import type { TFunction } from 'i18next'
 
 import dayjs from '@/lib/dayjs'
+import { formatQuota } from '@/lib/format'
 
 import type { SubscriptionPlan } from '../types'
 
@@ -65,4 +66,14 @@ export function formatResetPeriod(
 export function formatTimestamp(ts: number): string {
   if (!ts) return '-'
   return dayjs(ts * 1000).format('YYYY-MM-DD HH:mm:ss')
+}
+
+/**
+ * A plan's total quota is three-valued: a positive number of quota units, 0 for
+ * a plan that grants no quota at all, or a negative value for an unlimited one.
+ */
+export function formatTotalQuota(total: number, t: TFunction): string {
+  if (total === 0) return t('No quota')
+  if (total < 0) return t('Unlimited')
+  return formatQuota(total)
 }

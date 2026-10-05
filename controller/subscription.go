@@ -185,7 +185,7 @@ func AdminCreateSubscriptionPlan(c *gin.Context) {
 		return
 	}
 	if req.Plan.TotalAmount < -1 {
-		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示该套餐不提供任何额度）")
+		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示不限量，0 表示该套餐不提供额度）")
 		return
 	}
 	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)
@@ -259,7 +259,7 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		return
 	}
 	if req.Plan.TotalAmount < -1 {
-		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示该套餐不提供任何额度）")
+		common.ApiErrorMsg(c, "总额度不能小于 -1（-1 表示不限量，0 表示该套餐不提供额度）")
 		return
 	}
 	req.Plan.UpgradeGroup = strings.TrimSpace(req.Plan.UpgradeGroup)

@@ -6203,7 +6203,6 @@
     "Total invitation revenue": "Total invitation revenue",
     "Total Log Size": "Total Log Size",
     "Total Quota": "Total Quota",
-    "Total quota included in the plan, usable per billing period. 0 means unlimited.": "Total quota included in the plan, usable per billing period. 0 means unlimited.",
     "Total requests allowed per period. 0 = unlimited.": "Total requests allowed per period. 0 = unlimited.",
     "Total requests made": "Total requests made",
     "Total Revenue": "Total Revenue",
@@ -6905,6 +6904,8 @@
     "Plan #{{id}}": "Plan #{{id}}",
     "Redemption successful! Subscription activated: {{plan}}": "Redemption successful! Subscription activated: {{plan}}",
     "Allow redemption code redemption": "Allow redemption code redemption",
-    "-1 means the plan grants no quota and requests fall back to the wallet.": "-1 means the plan grants no quota and requests fall back to the wallet."
+    "No quota": "No quota",
+    "Total quota included in the plan, usable per billing period.": "Total quota included in the plan, usable per billing period.",
+    "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet.": "-1 means unlimited. 0 means the plan grants no quota and requests fall back to the wallet."
   }
 }

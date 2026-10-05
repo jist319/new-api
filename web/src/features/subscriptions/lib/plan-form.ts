@@ -24,11 +24,11 @@ import { parseQuotaFromDollars, quotaUnitsToDollars } from '@/lib/format'
 import type { SubscriptionPlan, PlanPayload } from '../types'
 
 /**
- * Sentinel total_amount meaning "this plan grants no quota at all". It is stored
+ * Sentinel total_amount meaning "this plan grants unlimited quota". It is stored
  * verbatim (never converted to/from display currency) so the backend can tell it
- * apart from 0, which means unlimited.
+ * apart from 0, which means the plan grants no quota at all.
  */
-export const NO_QUOTA_PLAN_TOTAL = -1
+export const UNLIMITED_PLAN_TOTAL = -1
 
 export function getPlanFormSchema(t: TFunction) {
   return z.object({
@@ -79,7 +79,8 @@ export const PLAN_FORM_DEFAULTS: PlanFormValues = {
   allow_redemption_code: true,
   allow_wallet_overflow: true,
   max_purchase_per_user: 0,
-  total_amount: 0,
+  // New plans start unlimited, matching what 0 used to mean.
+  total_amount: UNLIMITED_PLAN_TOTAL,
   upgrade_group: '',
   downgrade_group: '',
   stripe_price_id: '',
@@ -104,8 +105,8 @@ export function planToFormValues(plan: SubscriptionPlan): PlanFormValues {
     allow_wallet_overflow: plan.allow_wallet_overflow !== false,
     max_purchase_per_user: Number(plan.max_purchase_per_user || 0),
     total_amount:
-      Number(plan.total_amount) === NO_QUOTA_PLAN_TOTAL
-        ? NO_QUOTA_PLAN_TOTAL
+      Number(plan.total_amount) === UNLIMITED_PLAN_TOTAL
+        ? UNLIMITED_PLAN_TOTAL
         : quotaUnitsToDollars(Number(plan.total_amount || 0)),
     upgrade_group: plan.upgrade_group || '',
     downgrade_group: plan.downgrade_group || '',
@@ -131,8 +132,8 @@ export function formValuesToPlanPayload(values: PlanFormValues): PlanPayload {
       sort_order: Number(values.sort_order || 0),
       max_purchase_per_user: Number(values.max_purchase_per_user || 0),
       total_amount:
-        Number(values.total_amount) === NO_QUOTA_PLAN_TOTAL
-          ? NO_QUOTA_PLAN_TOTAL
+        Number(values.total_amount) === UNLIMITED_PLAN_TOTAL
+          ? UNLIMITED_PLAN_TOTAL
           : parseQuotaFromDollars(Number(values.total_amount || 0)),
       upgrade_group: values.upgrade_group || '',
       downgrade_group: values.downgrade_group || '',
