@@ -277,6 +277,11 @@ type UserSubscription struct {
 	UpgradeGroup  string `json:"upgrade_group" gorm:"type:varchar(64);default:''"`
 	PrevUserGroup string `json:"prev_user_group" gorm:"type:varchar(64);default:''"`
 
+	// Group this subscription's quota applies to, snapshotted from
+	// plan.UpgradeGroup. Empty means it applies to every group, which is how
+	// subscriptions created before this field existed keep working.
+	Group string `json:"group" gorm:"type:varchar(64);default:'';index"`
+
 	// Downgrade target group on expiry (snapshot from plan; empty = revert to PrevUserGroup)
 	DowngradeGroup string `json:"downgrade_group" gorm:"type:varchar(64);default:''"`
 
@@ -553,6 +558,7 @@ func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *Subscriptio
 		NextResetTime:       nextReset,
 		UpgradeGroup:        upgradeGroup,
 		PrevUserGroup:       prevGroup,
+		Group:               upgradeGroup,
 		DowngradeGroup:      strings.TrimSpace(plan.DowngradeGroup),
 		AllowWalletOverflow: allowWalletOverflow,
 		CreatedAt:           common.GetTimestamp(),
@@ -867,17 +873,36 @@ func GetAllActiveUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	return buildSubscriptionSummaries(subs), nil
 }
 
-// HasActiveUserSubscription returns whether the user has any active subscription.
+// scopeSubscriptionToGroup narrows a subscription query to the ones that apply to
+// a request's group: those bound to that group, plus unbound ones (created before
+// the group field existed), which apply to every group.
+//
+// The condition is wrapped in parentheses because GORM joins raw Where clauses
+// with AND without adding them: without the parens the trailing OR would bind
+// outside the caller's conditions and match other users' unbound subscriptions.
+//
+// An empty group means the caller could not resolve one; nothing is filtered, so
+// the query keeps its previous unrestricted behaviour.
+func scopeSubscriptionToGroup(query *gorm.DB, group string) *gorm.DB {
+	if group == "" {
+		return query
+	}
+	return query.Where("("+commonGroupCol+" = ? OR "+commonGroupCol+" = '')", group)
+}
+
+// HasActiveUserSubscription returns whether the user has any active subscription
+// that applies to the request's group.
 // This is a lightweight existence check to avoid heavy pre-consume transactions.
-func HasActiveUserSubscription(userId int) (bool, error) {
+func HasActiveUserSubscription(userId int, group string) (bool, error) {
 	if userId <= 0 {
 		return false, errors.New("invalid userId")
 	}
 	now := common.GetTimestamp()
 	var count int64
-	if err := DB.Model(&UserSubscription{}).
-		Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now).
-		Count(&count).Error; err != nil {
+	query := DB.Model(&UserSubscription{}).
+		Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now)
+	query = scopeSubscriptionToGroup(query, group)
+	if err := query.Count(&count).Error; err != nil {
 		return false, err
 	}
 	return count > 0, nil
@@ -885,17 +910,19 @@ func HasActiveUserSubscription(userId int) (bool, error) {
 
 // UserActiveSubscriptionsAllowWalletOverflow returns whether wallet balance may be used
 // after the user's subscription quota is exhausted. A single active subscription that
-// disallows wallet overflow (allow_wallet_overflow = false) blocks the fallback.
-func UserActiveSubscriptionsAllowWalletOverflow(userId int) (bool, error) {
+// applies to the request's group and disallows wallet overflow (allow_wallet_overflow =
+// false) blocks the fallback.
+func UserActiveSubscriptionsAllowWalletOverflow(userId int, group string) (bool, error) {
 	if userId <= 0 {
 		return false, errors.New("invalid userId")
 	}
 	now := common.GetTimestamp()
 	var strictCount int64
-	if err := DB.Model(&UserSubscription{}).
+	query := DB.Model(&UserSubscription{}).
 		Where("user_id = ? AND status = ? AND end_time > ? AND allow_wallet_overflow = ?",
-			userId, "active", now, false).
-		Count(&strictCount).Error; err != nil {
+			userId, "active", now, false)
+	query = scopeSubscriptionToGroup(query, group)
+	if err := query.Count(&strictCount).Error; err != nil {
 		return false, err
 	}
 	return strictCount == 0, nil
@@ -1302,7 +1329,9 @@ func maybeResetUserSubscriptionWithPlanTx(tx *gorm.DB, sub *UserSubscription, pl
 }
 
 // PreConsumeUserSubscription pre-consumes from any active subscription total quota.
-func PreConsumeUserSubscription(requestId string, userId int, modelName string, quotaType int, amount int64) (*SubscriptionPreConsumeResult, error) {
+// group is the group the request is using: only subscriptions bound to it (or to no
+// group at all) may pay for the request.
+func PreConsumeUserSubscription(requestId string, userId int, group string, modelName string, quotaType int, amount int64) (*SubscriptionPreConsumeResult, error) {
 	if userId <= 0 {
 		return nil, errors.New("invalid userId")
 	}
@@ -1339,8 +1368,10 @@ func PreConsumeUserSubscription(requestId string, userId int, modelName string, 
 		}
 
 		var subs []UserSubscription
-		if err := lockForUpdate(tx).
-			Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now).
+		groupQuery := lockForUpdate(tx).
+			Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now)
+		groupQuery = scopeSubscriptionToGroup(groupQuery, group)
+		if err := groupQuery.
 			Order("end_time asc, id asc").
 			Find(&subs).Error; err != nil {
 			return errors.New("no active subscription")
