@@ -630,6 +630,59 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
   - 崩溃遗留的 Redis 槽位最多占满 1 小时（`groupConcurrencySlotTTL`）。
   - 免费分组（倍率 0）+ 无订阅 + 钱包余额为 0 的用户，仍会被钱包路径的 `userQuota <= 0` 拦下——这是既有资金模型行为，有活跃订阅时走订阅路径不受影响。
 
+## 撤销：0 成本请求免资金来源的修改（2026-10-07）
+
+- 用户明确要求丢弃该改动，且**不要**再实现它。执行 `git reset --hard 2626a06c1`，丢弃：
+  - `859f55825 fix(billing): 0 成本请求不再要求资金来源`
+  - `f093195f1 docs(ai): 记录 0 成本请求免资金来源的修复与端到端验证`
+- 影响面还原确认：`service/billing_session.go` 中 `preConsumedQuota <= 0` 分支已消失，新增的 `service/billing_session_test.go` 已随提交一并移除；工作区仅剩未跟踪的 `Dockerfile.local`。
+- 因此以下现象**仍然存在**（属于既有行为，不是回归）：分组倍率为 0 的免费分组中，钱包为空且订阅 `amount_total = 0` 的用户发请求会被 403 拒绝，报 `subscription quota insufficient, need=1`。绕开方式是把该套餐额度设为 `-1`（不限量）。
+
+## 功能：订阅按分组作用域生效（2026-10-07）
+
+- 需求：方案 (c)——订阅只对「绑定的那个分组」的请求生效，堵住「持一份扣不完的订阅就能在任意分组白嫖」的漏洞。
+- 语义选择（用户确认）：**老订阅（`group = ''`）对所有分组生效**，保证既有部署零行为变化。
+
+- 设计：
+  - `UserSubscription` 新增 `Group`（varchar(64)，默认 `''`，带索引），创建时从 **`plan.UpgradeGroup`** 快照。
+  - 选 `UpgradeGroup` 是因为订阅本来就把用户拉进这个分组（`downgrade_group`/`prev_user_group` 负责回退），**「这份订阅在哪个分组生效」项目已有答案**，不需要新建映射；也给管理员一个现成的配置入口（卖并发套餐时本来就要填这个字段）。
+  - 分组不匹配 = 没有可用订阅 → 复用现成的 `ErrorCodeInsufficientUserQuota` → 走既有的钱包回退链，**不引入新错误码**。
+- 实现：
+  - `model/subscription.go`：加字段；`CreateUserSubscriptionFromPlanTx` 快照 `Group: upgradeGroup`；`PreConsumeUserSubscription` / `HasActiveUserSubscription` / `UserActiveSubscriptionsAllowWalletOverflow` 三个消费口加 `group` 参数，经新增的 `scopeSubscriptionToGroup` 过滤 `(group = ? OR group = '')`。
+  - **括号必须显式加**：GORM 用 AND 拼接裸 Where 条件且不会自动加括号，少了括号 SQL 会变成 `(user_id = … AND group = ?) OR group = ''`，**把其他用户所有 `group=''` 的订阅全部匹配进来**。已加专项回归用例锁住。
+  - `group` 传空时不过滤，保持原有不受限行为（分组由服务端从 token/用户推导，客户端无法置空）。
+  - `service/funding_source.go`：`SubscriptionFunding` 加 `group`，随 `PreConsume` 传入。
+  - `service/billing_session.go`：`trySubscription` 用 `relayInfo.UsingGroup` 填充；两处辅助函数同样传它。
+  - **`relayInfo.UsingGroup` 在预扣时已是最终分组**，链路：TokenAuth 写 `ContextKeyUsingGroup` → 频道选择在 `usingGroup == "auto"` 时写 `ContextKeyAutoGroup` → `HandleGroupRatio`（`relay/helper/price.go:53`）把它写回 `relayInfo.UsingGroup` → 才轮到 `PreConsumeBilling`。`ContextKeyAutoGroup` 的字面量就是 `"auto_group"`，与 `price.go` 里 `ctx.Get("auto_group")` 一致。
+  - 未改动且**无需**改动：`RefundSubscriptionPreConsume` / `PostConsumeUserSubscriptionDelta` 按 `requestId`/`subscriptionId` 定位，记录已钉死具体订阅；异步任务的 `SubscriptionId` 在提交时写入 `PrivateData`，天然绑定分组；管理员与用户端的订阅列表是展示用途，不加过滤。
+  - 前端未改动：新字段随模型 JSON 自动返回。
+
+- **跨数据库验证（AGENTS.md 对 schema 变更的强制要求）**：
+
+  | 引擎 | 版本 | 结果 |
+  | --- | --- | --- |
+  | SQLite | 3.50.4（glebarez/sqlite v1.11.0） | ✅ |
+  | MySQL | 8.4.11（临时 `mysql:8` 容器，127.0.0.1:13306） | ✅ |
+  | PostgreSQL | 15.19（临时 `postgres:15-alpine` 容器，127.0.0.1:15432） | ✅ |
+
+  - 每个引擎都验证了四件事：①空库 `AutoMigrate` 两次，列存在；②`DropColumn` 模拟「字段引入前建的库」→ 再 `AutoMigrate` 两次，列被补回；③升级前的既有行数据保留且读出来是空组（即对所有分组生效）；④列存在后再 `AutoMigrate`，已写入的分组值不被改动。
+  - 三个引擎的用例主体都跑到结尾（打印 `VERIFY-OK fresh+upgrade+idempotency`）。SQLite 那条整体报 FAIL 是本仓库在 Windows 上的已知 `TempDir RemoveAll cleanup` 问题（连接仍持有文件），**不是断言失败**。
+  - 验证方式：临时用仓库既有的 `newAuditTestDatabase` 多库测试框架写了一个矩阵用例，跑完即删除，未提交（仓库没有现成的迁移幂等测试文件可扩展，也不宜为此新增常驻测试）。
+
+- **真实升级路径验证**（应用自身 `AutoMigrate`，非测试框架）：本机 PG 里的 `user_subscriptions` 是**改动前建的**（无 `group` 列）且带 5 行历史数据。重建镜像并启动后：列被补上（`varchar`，默认 `''`）、索引 `idx_user_subscriptions_group` 建立、5 行数据完整保留且 `group` 为空。随后临时打开 PG 的 `log_statement=ddl` 再重启一次，**捕获到 0 条 DDL** —— 证明迁移幂等、不会每次启动重复 ALTER。验证后已 `ALTER SYSTEM RESET log_statement`。
+  - 注意：本应用不打印 DDL 日志，所以「第二次启动没有重复 ALTER」这条结论只能靠 PG 侧的 DDL 日志取得，上面的做法是必要的。
+
+- **端到端验证**（真实容器 + 真实渠道，临时造数后已清理）：
+  | 场景 | 结果 |
+  | --- | --- |
+  | 用户 2 钱包 0、活跃订阅（不限量）**绑定 `vip`**、令牌分组 `并发1` 发请求 | ✅ **403 用户额度不足**，不再是「订阅额度不足」——订阅未参与，直接落到钱包；订阅 `amount_used` 保持 0 |
+  | 把该订阅的 `group` 改成 `并发1` 后同一请求 | ✅ 日志 `funding=subscription`、预扣记录 `user_subscription_id = 6`，订阅**确实支付**（随后因上游报错而退款） |
+  | 清理 | ✅ 删除临时令牌与临时订阅、清理预扣记录；删除两个临时数据库容器 |
+
+- **顺带发现（与本次改动无关，需要你处理）**：渠道 #1「DeepSeek」（type 43，`base_url = https://api.jistai.net`）把请求转发到上游后，**上游返回 403 `无权访问 DeepSeek 分组`**。该文案正是 new-api 自身 `middleware/auth.go:623` 的格式，说明这个渠道指向的是**另一台 new-api 实例**，而那台实例上该账号的用户分组无法使用名为 `DeepSeek` 的分组。属于上游账号/分组配置问题，改本地代码无用。完整链路证据：`channel error (channel #1, status code: 403)`。
+
+- 备注：`group = ''` 的订阅仍对所有分组生效，所以**本机改动前创建的订阅依旧能跨分组使用**；如需彻底收紧，把这些订阅的 `group` 补成对应套餐的 `upgrade_group` 即可。本次未推送。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。
