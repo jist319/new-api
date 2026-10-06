@@ -12,6 +12,7 @@
 - ⚠️ 过滤条件**必须带括号**：GORM 用 AND 拼接裸 Where 且不自动加括号，少了会退化成 `… OR group = ''`，把别人所有空组订阅都匹配进来。已有专项回归用例。
 - 验证：SQLite 3.50.4 / MySQL 8.4.11 / PostgreSQL 15.19 三库跑通「空库迁移两次 + DropColumn 模拟旧库升级 + 两次再迁移 + 既有数据保留」；真实 PG 升级路径补列建索引、数据无损，且打开 DDL 日志重启后**捕获 0 条 DDL**（迁移幂等）；端到端验到「订阅绑定 vip 时 `并发1` 请求 403 用户额度不足」与「绑定 `并发1` 时订阅确实支付」两条。
 - 附注：渠道 #1 指向上游另一台 new-api（`https://api.jistai.net`），上游返回 403 `无权访问 DeepSeek 分组`——上游账号分组配置问题，与本改动无关。
+- 交付：已强推 `origin/dev`（`f093195f1...d09fb5a65`，forced update）。远端此前多出的两笔 0 成本修复提交（来自另一工作区）已从 `origin/dev` 移除。强推需先在 GitHub 临时开启 `dev` 的 Allow force pushes——**记得改回去**，并让其他克隆 `git reset --hard origin/dev`。
 
 ## 上一任务：按分组的每用户并发限制
 

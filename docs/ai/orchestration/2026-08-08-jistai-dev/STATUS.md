@@ -683,6 +683,22 @@ av-group.tsx 组标题为空时不再渲染；use-sidebar-data.ts chat 组 title
 
 - 备注：`group = ''` 的订阅仍对所有分组生效，所以**本机改动前创建的订阅依旧能跨分组使用**；如需彻底收紧，把这些订阅的 `group` 补成对应套餐的 `upgrade_group` 即可。本次未推送。
 
+## 交付：dev 强推 origin（2026-10-07）
+
+- 用户要求推送。推送时发现 **`dev` 已分叉**：
+  - 本地 `dev` = `d09fb5a65`（`2626a06c1` → 并发限制 ×3 → 订阅分组作用域 ×2）
+  - 远端 `dev` = `f093195f1`（`2626a06c1` → `859f55825` → `f093195f1`），多出的**正好**是被要求丢弃的那两笔 0 成本修复提交，无其他内容。
+  - 这两笔**不是本会话推的**（本地建完就被叫停，从未执行 push），来源应为另一工作区/机器（账本提到过 `D:\Codex`）。
+- 用户选择**强推覆盖**。首次 `--force-with-lease` 被 GitHub 拒绝：`GH006: Protected branch update failed … Cannot force-push to this branch`——`dev` 有分支保护。
+- 用户按提示在 Settings → Branches 为 `dev` 勾选 **Allow force pushes → Everyone** 后重试成功：
+  `+ f093195f1...d09fb5a65  dev -> dev (forced update)`
+- 验证：`git ls-remote` 返回 `dev = d09fb5a65`；`git merge-base --is-ancestor` 确认 `859f55825`、`f093195f1` 已**均不可从 origin/dev 到达**；`main` 未受影响，仍为 `b48b74ab`。
+- ⚠️ 后续事项（需人工确认，本次未执行）：
+  1. **建议把 `Allow force pushes` 取消勾选**，恢复正常保护。
+  2. **其他克隆/工作区需要重置**：`git fetch origin && git reset --hard origin/dev`（`D:\Codex` 那台若在用同样需要）。
+  3. GitHub 上 `f093195f1` 在两笔提交被 GC 前仍可通过 URL 访问，但已不在任何分支上。
+- 网络：本机直连 `github.com:443` 不通（`Failed to connect … after 21096 ms`），`ls-remote`/`fetch`/`push` 均通过用户代理 `127.0.0.1:10808` 完成（`git -c http.proxy=…`，仅对单条命令生效，未改动 git 配置）。
+
 ## 基线验证矩阵（2026-08-08，工具链变更后已过期）
 
 > 下表为 8-08 在装有 Go 1.25.1 / Bun 1.3.14 的环境下测得。当前机器未安装 Go/Bun，需先恢复工具链再重跑。
